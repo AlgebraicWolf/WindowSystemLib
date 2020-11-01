@@ -3,7 +3,6 @@
 #include "SFMLRenderEngine/RenderEngine.hpp"
 #include "WindowSystem/Window.hpp"
 
-
 // Singletone application class
 class Application {
    public:
@@ -22,38 +21,56 @@ void Application::Init() {
     RenderEngine::Init(800, 600);
     rootWindow = new ContainerWindow();
 
-    Color bkg;
-    Color frg;
+    Color defBkg = {0, 0, 0, 0};
+    Color hoverBkg = {100, 100, 100, 255};
+    Color pressBkg = {255, 255, 255, 255};
 
-    bkg.red = 0;
-    bkg.green = 0;
-    bkg.blue = 0;
-    bkg.alpha = 0;
+    AbstractButton *but1 = new AbstractButton;
+    but1->setBackgroundColor(defBkg);
+    but1->setHoverColor(hoverBkg);
+    but1->setPressColor(pressBkg);
+    but1->setOutlineColor(pressBkg);
+    but1->setThickness(1);
 
-    frg.red = 255;
-    frg.green = 255;
-    frg.blue = 255;
-    frg.alpha = 255;
+    but1->setPosition(50, 50);
+    but1->setSize(20, 20);
 
-    RectangleWindow *rect1 = new RectangleWindow();
-    rect1->setBackgroundColor(bkg);
-    rect1->setOutlineColor(frg);
-    rect1->setPosition(50, 50);
-    rect1->setSize(200, 200);
-    rect1->setThickness(-30);
+    AbstractButton *but2 = new AbstractButton;
+    but2->setBackgroundColor(defBkg);
+    but2->setHoverColor(hoverBkg);
+    but2->setPressColor(pressBkg);
+    but2->setOutlineColor(pressBkg);
+    but2->setThickness(1);
 
-    RectangleWindow *rect2 = new RectangleWindow();
-    rect2->setBackgroundColor(bkg);
-    rect2->setOutlineColor(frg);
-    rect2->setPosition(300, 50);
-    rect2->setSize(200, 200);
-    rect2->setThickness(30);
+    but2->setPosition(50, 350);
+    but2->setSize(20, 20);
 
-    rootWindow->attachChild(rect1);
-    rootWindow->attachChild(rect2);
+    AbstractButton *sliderBkg = new AbstractButton;
+    
+    sliderBkg->setBackgroundColor(defBkg);
+    sliderBkg->setHoverColor(defBkg);
+    sliderBkg->setPressColor(defBkg);
+    sliderBkg->setOutlineColor(pressBkg);
+    sliderBkg->setThickness(1);
 
-    rect1->updateEventMask(EV_KEYBOARD_PRESS | EV_KEYBOARD_RELEASE);
-    rect2->updateEventMask(EV_MOUSE_KEY_PRESS | EV_MOUSE_KEY_RELEASE);
+    sliderBkg->setPosition(50, 70);
+    sliderBkg->setSize(20, 280);
+
+    Slider *slider = new Slider;
+
+    slider->setBackgroundColor(defBkg);
+    slider->setHoverColor(hoverBkg);
+    slider->setPressColor(pressBkg);
+    slider->setOutlineColor(pressBkg);
+    slider->setThickness(1);
+
+    slider->setPosition(50, 220);
+    slider->setSize(20, 60);
+
+    rootWindow->attachChild(but1);
+    rootWindow->attachChild(but2);
+    rootWindow->attachChild(sliderBkg);
+    rootWindow->attachChild(slider);
 }
 
 void Application::Finalize() {
@@ -66,20 +83,19 @@ bool Application::Run() {
     while (RenderEngine::PollEvent(ev)) {
         rootWindow->processEvent(ev);
 
-        switch (ev.eventType)
-        {
-        case EV_CLOSED:
-            return 0;
-            break;
-        
-        default:
-            break;
+        switch (ev.eventType) {
+            case EV_CLOSED:
+                return 0;
+                break;
+
+            default:
+                break;
         }
     }
 
     RenderEngine::Clear();
     rootWindow->draw();
-    
+
     RenderEngine::Display();
 
     return 1;

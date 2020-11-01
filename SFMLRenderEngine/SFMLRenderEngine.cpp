@@ -96,7 +96,7 @@ bool RenderEngine::TranslateEvent(sf::Event sfmlEv, Event& ev) {
     return true;
 }
 
-void RenderEngine::DrawRect(unsigned int x, unsigned int y,
+void RenderEngine::DrawRect(int x, int y,
                             unsigned int width, unsigned int height,
                             Color bkgColor, Color frgColor, float thickness) {
     sf::RectangleShape rect(sf::Vector2f(width, height));

@@ -13,7 +13,7 @@ class RenderEngine {
     static void Clear();                                        // Function that clears window
     static void Display();                                      // Function that displays new content on window
     static bool PollEvent(Event& ev);                           // Event polling
-    static void DrawRect(unsigned int x, unsigned int y,
+    static void DrawRect(int x, int y,
                          unsigned int width, unsigned int height,
                          Color bkgColor, Color frgColor, float thickness);  // Draw rectangle
 
