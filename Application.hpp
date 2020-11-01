@@ -56,7 +56,7 @@ void Application::Init() {
     sliderBkg->setPosition(50, 70);
     sliderBkg->setSize(20, 280);
 
-    Slider *slider = new Slider;
+    Slider *slider = new Slider(true);
 
     slider->setBackgroundColor(defBkg);
     slider->setHoverColor(hoverBkg);
@@ -64,8 +64,9 @@ void Application::Init() {
     slider->setOutlineColor(pressBkg);
     slider->setThickness(1);
 
-    slider->setPosition(50, 220);
+    slider->setPosition(50, 70);
     slider->setSize(20, 60);
+    slider->setLimit(220);
 
     rootWindow->attachChild(but1);
     rootWindow->attachChild(but2);

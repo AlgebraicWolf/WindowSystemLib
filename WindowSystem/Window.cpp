@@ -64,7 +64,7 @@ void ContainerWindow::attachChild(AbstractWindow* win) {
     win->attachToParent(this);
 }
 
-void RectangleWindow::setPosition(unsigned int x, unsigned int y) {
+void RectangleWindow::setPosition(int x, int y) {
     this->x = x;
     this->y = y;
 }
@@ -140,22 +140,49 @@ void AbstractButton::handleEvent(Event ev) {
     }
 }
 
+void Slider::setPosition(int x, int y) {
+    this->x = x;
+    this->y = y;
+
+    if (isHorizontal) {
+        pivot = x;
+    } else {
+        pivot = y;
+    }
+}
+
+Slider::Slider(bool isHorizontal) : isHorizontal(isHorizontal) {}
+
+void Slider::setLimit(int limit) {
+    this->limit = limit;
+}
+
 void Slider::handleEvent(Event ev) {
     if (IS_MOUSE_EV(ev)) {
         bool inside = isInside(ev.mouse.x, ev.mouse.y);
 
         if (pressed) {
-            x = scrollX + ev.mouse.x - startX;
-            y = scrollY + ev.mouse.y - startY;
+            if(isHorizontal) {
+                x = movementStart + ev.mouse.x - strokeStart;
+                if(x < pivot) x = pivot;
+                else if (x > pivot + limit) x = pivot + limit;
+            } else {
+                y = movementStart + ev.mouse.y - strokeStart;
+                if(y < pivot) y = pivot;
+                else if (y > pivot + limit) y = pivot + limit;
+            }
         }
 
         if (ev.eventType == EV_MOUSE_KEY_PRESS && inside) {
             hovered = true;
             pressed = true;
-            startX = ev.mouse.x;
-            startY = ev.mouse.y;
-            scrollX = x;
-            scrollY = y;
+            if (isHorizontal) {
+                strokeStart = ev.mouse.x;
+                movementStart = x;
+            } else {
+                strokeStart = ev.mouse.y;
+                movementStart = y;
+            }
         } else if (ev.eventType == EV_MOUSE_KEY_RELEASE && pressed) {
             pressed = false;
         } else if (ev.eventType == EV_MOUSE_MOVE) {

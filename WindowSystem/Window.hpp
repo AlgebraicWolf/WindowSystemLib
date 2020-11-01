@@ -36,7 +36,7 @@ class ContainerWindow : public AbstractWindow {
 // Container window that can be represented as a rectangle
 class RectangleWindow : public ContainerWindow {
    public:
-    void setPosition(unsigned int x, unsigned int y);       // Sets position of the rectangle window
+    void setPosition(int x, int y);                         // Sets position of the rectangle window
     void setSize(unsigned int width, unsigned int height);  // Sets dimensions of the window
     void setBackgroundColor(const Color &color);            // Color of the rectangle itself
     void setOutlineColor(const Color &color);               // Color of the rectangle outline
@@ -78,12 +78,15 @@ class AbstractButton : public RectangleWindow {
 // Slider -- control that can be moved either horizontally of vertically
 class Slider : public AbstractButton {
    public:
-    void setLimits(unsigned int min, unsigned int max);
+    Slider(bool isHorizontal); 
+    void setLimit(int limit);
+    void setPosition(int x, int y);  // Sets position of the rectangle window
 
    private:
     virtual void handleEvent(Event ev) override;  // handleEvent should be overriden in order to allow for proper movement
-    int pivotX;                                   // Coordinates of the beginning
-    int pivotY;                                   // Coordinates of the beginning
+    int pivot;                                    // Coordinates of the beginning
+    int strokeStart;                              // Coordinate of the stroke start
+    int movementStart;                            // Coordinate of the scrollbar in the beginning of the stroke
     int limit;                                    // Amount of movement to allow for
     bool isHorizontal;                            // Is slider horizontal or vertical
 };
