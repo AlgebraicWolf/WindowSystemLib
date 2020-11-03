@@ -5,6 +5,10 @@
 void AbstractWindow::draw() {
 }
 
+AbstractWindow::AbstractWindow() {
+    parent = nullptr;
+}
+
 AbstractWindow::~AbstractWindow() {
     if (parent) {
         // parent->detach(this);
@@ -35,6 +39,7 @@ void AbstractWindow::processEvent(Event ev) {
 
 void AbstractWindow::attachToParent(AbstractWindow* parent) {
     this->parent = parent;
+    parent->updateEventMask(eventMask);
 }
 
 void AbstractWindow::updateEventMask(uint64_t update) {
@@ -140,6 +145,27 @@ void AbstractButton::handleEvent(Event ev) {
     }
 }
 
+bool AbstractButton::isInside(unsigned int x, unsigned int y) {
+    unsigned int xstart = this->x;
+    unsigned int xend = this->x + this->width;
+    unsigned int ystart = this->y;
+    unsigned int yend = this->y + this->height;
+
+    if (thickness > 0) {
+        xstart -= thickness;
+        ystart -= thickness;
+        xend += thickness;
+        yend += thickness;
+    }
+
+    return (xstart <= x) && (ystart <= y) && (xend >= x) && (yend >= y);
+}
+
+void AbstractButton::setBackgroundColor(const Color& color) {
+    defaultBkg = color;
+    bkg = color;
+}
+
 void Slider::setPosition(int x, int y) {
     this->x = x;
     this->y = y;
@@ -151,7 +177,9 @@ void Slider::setPosition(int x, int y) {
     }
 }
 
-Slider::Slider(bool isHorizontal) : isHorizontal(isHorizontal) {}
+Slider::Slider(bool isHorizontal) : isHorizontal(isHorizontal) {
+    eventMask |= EV_SCROLL;  // Don't want to propagate subscription
+}
 
 void Slider::setLimit(int limit) {
     this->limit = limit;
@@ -162,14 +190,10 @@ void Slider::handleEvent(Event ev) {
         bool inside = isInside(ev.mouse.x, ev.mouse.y);
 
         if (pressed) {
-            if(isHorizontal) {
+            if (isHorizontal) {
                 x = movementStart + ev.mouse.x - strokeStart;
-                if(x < pivot) x = pivot;
-                else if (x > pivot + limit) x = pivot + limit;
             } else {
                 y = movementStart + ev.mouse.y - strokeStart;
-                if(y < pivot) y = pivot;
-                else if (y > pivot + limit) y = pivot + limit;
             }
         }
 
@@ -192,6 +216,39 @@ void Slider::handleEvent(Event ev) {
                 hovered = false;
             }
         }
+    } else if (ev.eventType == EV_SCROLL) {
+        switch (ev.scroll.scrollType) {
+            case Event::UP:
+                if(isHorizontal) {
+                    x -= 10;
+                } else {
+                    y -= 10;
+                }
+                break;
+
+            case Event::DOWN:
+                if(isHorizontal) {
+                    x += 10;
+                } else {
+                    y += 10;
+                }
+                break;
+
+            default:
+                break;
+        }
+    }
+
+    if (isHorizontal) {
+        if (x < pivot)
+            x = pivot;
+        else if (x > pivot + limit)
+            x = pivot + limit;
+    } else {
+        if (y < pivot)
+            y = pivot;
+        else if (y > pivot + limit)
+            y = pivot + limit;
     }
 
     if (pressed) {
@@ -203,23 +260,84 @@ void Slider::handleEvent(Event ev) {
     }
 }
 
-bool AbstractButton::isInside(unsigned int x, unsigned int y) {
-    unsigned int xstart = this->x;
-    unsigned int xend = this->x + this->width;
-    unsigned int ystart = this->y;
-    unsigned int yend = this->y + this->height;
+Scrollbar::Scrollbar(int length, bool isHorizontal) : isHorizontal(isHorizontal), length(length) {
+    up = new ScrollbarButton(true);
+    down = new ScrollbarButton(false);
+    slider = new Slider(isHorizontal);
 
-    if (thickness > 0) {
-        xstart -= thickness;
-        ystart -= thickness;
-        xend += thickness;
-        yend += thickness;
-    }
+    attachChild(up);
+    attachChild(down);
+    attachChild(slider);
 
-    return (xstart <= x) && (ystart <= y) && (xend >= x) && (yend >= y);
+    up->setSize(20, 20);
+    down->setSize(20, 20);
+
+    up->setThickness(1);
+    down->setThickness(1);
+    slider->setThickness(1);
+
+    eventMask |= EV_SCROLL;  // Don't really want to propagate subscription to scroll event since we want
 }
 
-void AbstractButton::setBackgroundColor(const Color& color) {
-    defaultBkg = color;
-    bkg = color;
+void Scrollbar::setSliderSize(int size) {
+    if (isHorizontal) {
+        slider->setSize(size, 20);
+    } else {
+        slider->setSize(20, size);
+    }
+
+    slider->setLimit(length - size);
+}
+
+void Scrollbar::setPosition(int x, int y) {
+    up->setPosition(x, y);
+    if (isHorizontal) {
+        slider->setPosition(x + 20, y);
+        down->setPosition(x + 20 + length, y);
+    } else {
+        slider->setPosition(x, y + 20);
+        down->setPosition(x, y + 20 + length);
+    }
+}
+
+void Scrollbar::setOutlineColor(const Color& color) {
+    up->setOutlineColor(color);
+    down->setOutlineColor(color);
+    slider->setOutlineColor(color);
+}
+
+void Scrollbar::setBackgroundColor(const Color& color) {
+    up->setBackgroundColor(color);
+    down->setBackgroundColor(color);
+    slider->setBackgroundColor(color);
+}
+
+void Scrollbar::setHoverColor(const Color& color) {
+    up->setHoverColor(color);
+    down->setHoverColor(color);
+    slider->setHoverColor(color);
+}
+
+void Scrollbar::setPressColor(const Color& color) {
+    up->setPressColor(color);
+    down->setPressColor(color);
+    slider->setPressColor(color);
+}
+
+ScrollbarButton::ScrollbarButton(bool isUp) : isUp(isUp) {}
+
+void ScrollbarButton::click() {
+    if (!parent)
+        return;
+
+    Event scrollEvent;
+    scrollEvent.eventType = EV_SCROLL;
+
+    if (isUp) {
+        scrollEvent.scroll.scrollType = Event::UP;
+    } else {
+        scrollEvent.scroll.scrollType = Event::DOWN;
+    }
+
+    parent->processEvent(scrollEvent);
 }

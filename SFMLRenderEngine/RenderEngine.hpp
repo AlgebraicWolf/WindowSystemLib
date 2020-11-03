@@ -23,4 +23,6 @@ class RenderEngine {
     static sf::RenderWindow mainWindow;                                         // System window for displaying anything
     RenderEngine();                                                             // Private constructor ensures that class is a singletone indeed
 };
+
+using OffScreenRenderTarget = sf::RenderTexture;
 #endif  // RENDERENGINE_HPP_

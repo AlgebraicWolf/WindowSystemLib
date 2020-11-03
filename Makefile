@@ -1,4 +1,4 @@
-CFLAGS = -O3 -Wall -Werror -Wextra -pedantic -pedantic-errors
+CFLAGS = -O3 -Wall -Werror -Wextra -pedantic -pedantic-errors -g
 SFMLLIB = -lsfml-system -lsfml-graphics -lsfml-window
 
 WindowSystem: WindowSystem/Window.cpp WindowSystem/Window.hpp

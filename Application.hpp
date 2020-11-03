@@ -25,53 +25,65 @@ void Application::Init() {
     Color hoverBkg = {100, 100, 100, 255};
     Color pressBkg = {255, 255, 255, 255};
 
-    AbstractButton *but1 = new AbstractButton;
-    but1->setBackgroundColor(defBkg);
-    but1->setHoverColor(hoverBkg);
-    but1->setPressColor(pressBkg);
-    but1->setOutlineColor(pressBkg);
-    but1->setThickness(1);
+    Scrollbar *scrollbar = new Scrollbar(250, false);
+    scrollbar->setSliderSize(50);
+    scrollbar->setPosition(50, 50);
 
-    but1->setPosition(50, 50);
-    but1->setSize(20, 20);
+    scrollbar->setBackgroundColor(defBkg);
+    scrollbar->setHoverColor(hoverBkg);
+    scrollbar->setPressColor(pressBkg);
 
-    AbstractButton *but2 = new AbstractButton;
-    but2->setBackgroundColor(defBkg);
-    but2->setHoverColor(hoverBkg);
-    but2->setPressColor(pressBkg);
-    but2->setOutlineColor(pressBkg);
-    but2->setThickness(1);
+    scrollbar->setOutlineColor(pressBkg);
 
-    but2->setPosition(50, 350);
-    but2->setSize(20, 20);
+    rootWindow->attachChild(scrollbar);
 
-    AbstractButton *sliderBkg = new AbstractButton;
+    // AbstractButton *but1 = new AbstractButton;
+    // but1->setBackgroundColor(defBkg);
+    // but1->setHoverColor(hoverBkg);
+    // but1->setPressColor(pressBkg);
+    // but1->setOutlineColor(pressBkg);
+    // but1->setThickness(1);
+
+    // but1->setPosition(50, 50);
+    // but1->setSize(20, 20);
+
+    // AbstractButton *but2 = new AbstractButton;
+    // but2->setBackgroundColor(defBkg);
+    // but2->setHoverColor(hoverBkg);
+    // but2->setPressColor(pressBkg);
+    // but2->setOutlineColor(pressBkg);
+    // but2->setThickness(1);
+
+    // but2->setPosition(50, 350);
+    // but2->setSize(20, 20);
+
+    // AbstractButton *sliderBkg = new AbstractButton;
     
-    sliderBkg->setBackgroundColor(defBkg);
-    sliderBkg->setHoverColor(defBkg);
-    sliderBkg->setPressColor(defBkg);
-    sliderBkg->setOutlineColor(pressBkg);
-    sliderBkg->setThickness(1);
+    // sliderBkg->setBackgroundColor(defBkg);
+    // sliderBkg->setHoverColor(defBkg);
+    // sliderBkg->setPressColor(defBkg);
+    // sliderBkg->setOutlineColor(pressBkg);
+    // sliderBkg->setThickness(1);
 
-    sliderBkg->setPosition(50, 70);
-    sliderBkg->setSize(20, 280);
+    // sliderBkg->setPosition(50, 70);
+    // sliderBkg->setSize(20, 280);
 
-    Slider *slider = new Slider(true);
+    // Slider *slider = new Slider(true);
 
-    slider->setBackgroundColor(defBkg);
-    slider->setHoverColor(hoverBkg);
-    slider->setPressColor(pressBkg);
-    slider->setOutlineColor(pressBkg);
-    slider->setThickness(1);
+    // slider->setBackgroundColor(defBkg);
+    // slider->setHoverColor(hoverBkg);
+    // slider->setPressColor(pressBkg);
+    // slider->setOutlineColor(pressBkg);
+    // slider->setThickness(1);
 
-    slider->setPosition(50, 70);
-    slider->setSize(20, 60);
-    slider->setLimit(220);
+    // slider->setPosition(50, 70);
+    // slider->setSize(20, 60);
+    // slider->setLimit(220);
 
-    rootWindow->attachChild(but1);
-    rootWindow->attachChild(but2);
-    rootWindow->attachChild(sliderBkg);
-    rootWindow->attachChild(slider);
+    // rootWindow->attachChild(but1);
+    // rootWindow->attachChild(but2);
+    // rootWindow->attachChild(sliderBkg);
+    // rootWindow->attachChild(slider);
 }
 
 void Application::Finalize() {

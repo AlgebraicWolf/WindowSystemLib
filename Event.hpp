@@ -13,7 +13,7 @@ struct Event {
         MIDDLE
     };
 
-    enum SCROLLS {
+    enum SCROLL {
         UP,
         DOWN,
         PG_UP,
@@ -32,11 +32,17 @@ struct Event {
         unsigned char keyCode;
     };
 
+    struct Scroll {
+        SCROLL scrollType;
+        float position;
+    };
+
     // Member data
     uint64_t eventType;
     union {
         Mouse mouse;
         Keyboard keyboard;
+        Scroll scroll;
     };
 };
 #endif  // EVENT_HPP_

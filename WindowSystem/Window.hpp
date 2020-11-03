@@ -8,6 +8,7 @@
 // Abstract window that can handle an event
 class AbstractWindow {
    public:
+    AbstractWindow();
     virtual void draw();                                  // Draw the window
     virtual void processEvent(Event ev);                  // Event processing. Just dummy function that calls handleEvent
     virtual void attachToParent(AbstractWindow *parent);  // Function that attaches this window to some other window
@@ -78,7 +79,7 @@ class AbstractButton : public RectangleWindow {
 // Slider -- control that can be moved either horizontally of vertically
 class Slider : public AbstractButton {
    public:
-    Slider(bool isHorizontal); 
+    Slider(bool isHorizontal);
     void setLimit(int limit);
     void setPosition(int x, int y);  // Sets position of the rectangle window
 
@@ -91,12 +92,45 @@ class Slider : public AbstractButton {
     bool isHorizontal;                            // Is slider horizontal or vertical
 };
 
+class ScrollbarButton : public AbstractButton {
+    public:
+    ScrollbarButton(bool isUp);
+    private:
+    virtual void click();
+    bool isUp;
+};
+
 // Scrollbar -- control with two buttons and a slider
 class Scrollbar : public ContainerWindow {
    public:
-    Scrollbar(unsigned int height);  // Constructor of slider element
+    Scrollbar(int length, bool isHorizontal);  // Constructor of slider element
+    void setSliderSize(int size);              // Set size of slider
+    void setPosition(int x, int y); // Scrollbar position
+    void setOutlineColor(const Color& color);
+    void setHoverColor(const Color &color);       // Set button hover color
+    void setPressColor(const Color &color);       // Set button press color
+    void setBackgroundColor(const Color &color);  // Set color for chillin' button
+    // virtual void attachToParent(AbstractWindow *parent) override;
    private:
-    unsigned int height;  // Height of the active part of the slider
+    ScrollbarButton *up;
+    ScrollbarButton *down;
+    Slider *slider;
+
+    bool isHorizontal;
+    int length;  // Height of the active part of the slider
+};
+
+// Non-owning text window
+class TextWindow : public ContainerWindow {
+    public:
+     TextWindow();
+     void setText(const char * newContent);
+     void setViewportPosition(int x, int y);
+     virtual void draw();
+    private:
+     const char *content;
+    
+
 };
 
 #endif  // WINDOW_HPP_
