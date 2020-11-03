@@ -3,9 +3,12 @@
 #include "RenderEngine.hpp"
 
 sf::RenderWindow RenderEngine::mainWindow;
+RenderTarget* RenderEngine::currentTarget;
+sf::Font RenderEngine::defaultFont;
 
 void RenderEngine::Init(unsigned int width, unsigned int height) {
     mainWindow.create(sf::VideoMode(width, height), "My window system", sf::Style::None);
+    currentTarget = &mainWindow;
 }
 
 void RenderEngine::Finalize() {
@@ -105,4 +108,25 @@ void RenderEngine::DrawRect(int x, int y,
     rect.setOutlineColor(sf::Color(frgColor.red, frgColor.green, frgColor.blue, frgColor.alpha));
     rect.setOutlineThickness(thickness);
     mainWindow.draw(rect);
+}
+
+void RenderEngine::DrawText(int x, int y, const char* text) {
+    sf::Text txt(text, defaultFont);
+    txt.setPosition(x, y);
+    txt.setFillColor(sf::Color::White);
+    currentTarget->draw(txt);
+}
+
+void RenderEngine::DrawRenderTarget(int x, int y, const OffScreenRenderTarget& from) {
+    sf::Sprite sprite(from.getTexture());
+    sprite.setPosition(x, y);
+    currentTarget->draw(sprite);
+}
+
+void RenderEngine::RenderToMain() {
+    currentTarget = &mainWindow;
+}
+
+void RenderEngine::SetRenderTarget(RenderTarget* target) {
+    currentTarget = target;
 }

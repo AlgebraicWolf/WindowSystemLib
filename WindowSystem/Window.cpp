@@ -145,7 +145,7 @@ void AbstractButton::handleEvent(Event ev) {
     }
 }
 
-bool AbstractButton::isInside(unsigned int x, unsigned int y) {
+bool RectangleWindow::isInside(unsigned int x, unsigned int y) {
     unsigned int xstart = this->x;
     unsigned int xend = this->x + this->width;
     unsigned int ystart = this->y;
@@ -219,7 +219,7 @@ void Slider::handleEvent(Event ev) {
     } else if (ev.eventType == EV_SCROLL) {
         switch (ev.scroll.scrollType) {
             case Event::UP:
-                if(isHorizontal) {
+                if (isHorizontal) {
                     x -= 10;
                 } else {
                     y -= 10;
@@ -227,10 +227,26 @@ void Slider::handleEvent(Event ev) {
                 break;
 
             case Event::DOWN:
-                if(isHorizontal) {
+                if (isHorizontal) {
                     x += 10;
                 } else {
                     y += 10;
+                }
+                break;
+
+            case Event::PG_UP:
+                if (isHorizontal) {
+                    x -= 30;
+                } else {
+                    y -= 30;
+                }
+                break;
+
+            case Event::PG_DOWN:
+                if (isHorizontal) {
+                    x += 30;
+                } else {
+                    y += 30;
                 }
                 break;
 
@@ -260,11 +276,21 @@ void Slider::handleEvent(Event ev) {
     }
 }
 
+int Slider::getPositionAlongAxis() {
+    if (isHorizontal) {
+        return x;
+    } else {
+        return y;
+    }
+}
+
 Scrollbar::Scrollbar(int length, bool isHorizontal) : isHorizontal(isHorizontal), length(length) {
     up = new ScrollbarButton(true);
     down = new ScrollbarButton(false);
     slider = new Slider(isHorizontal);
+    bkg = new ScrollbarBackground(isHorizontal);
 
+    attachChild(bkg);
     attachChild(up);
     attachChild(down);
     attachChild(slider);
@@ -272,9 +298,16 @@ Scrollbar::Scrollbar(int length, bool isHorizontal) : isHorizontal(isHorizontal)
     up->setSize(20, 20);
     down->setSize(20, 20);
 
-    up->setThickness(1);
-    down->setThickness(1);
-    slider->setThickness(1);
+    if (isHorizontal) {
+        bkg->setSize(length, 20);
+    } else {
+        bkg->setSize(20, length);
+    }
+
+    up->setThickness(-1);
+    down->setThickness(-1);
+    slider->setThickness(-1);
+    bkg->setThickness(-1);
 
     eventMask |= EV_SCROLL;  // Don't really want to propagate subscription to scroll event since we want
 }
@@ -292,9 +325,11 @@ void Scrollbar::setSliderSize(int size) {
 void Scrollbar::setPosition(int x, int y) {
     up->setPosition(x, y);
     if (isHorizontal) {
+        bkg->setPosition(x + 20, y);
         slider->setPosition(x + 20, y);
         down->setPosition(x + 20 + length, y);
     } else {
+        bkg->setPosition(x, y + 20);
         slider->setPosition(x, y + 20);
         down->setPosition(x, y + 20 + length);
     }
@@ -304,12 +339,14 @@ void Scrollbar::setOutlineColor(const Color& color) {
     up->setOutlineColor(color);
     down->setOutlineColor(color);
     slider->setOutlineColor(color);
+    bkg->setOutlineColor(color);
 }
 
 void Scrollbar::setBackgroundColor(const Color& color) {
     up->setBackgroundColor(color);
     down->setBackgroundColor(color);
     slider->setBackgroundColor(color);
+    bkg->setBackgroundColor(color);
 }
 
 void Scrollbar::setHoverColor(const Color& color) {
@@ -322,6 +359,14 @@ void Scrollbar::setPressColor(const Color& color) {
     up->setPressColor(color);
     down->setPressColor(color);
     slider->setPressColor(color);
+}
+
+bool Scrollbar::isInsideSlider(int x, int y) {
+    return slider->isInside(x, y);
+}
+
+int Scrollbar::getSliderPositionAlongAxis() {
+    return slider->getPositionAlongAxis();
 }
 
 ScrollbarButton::ScrollbarButton(bool isUp) : isUp(isUp) {}
@@ -340,4 +385,57 @@ void ScrollbarButton::click() {
     }
 
     parent->processEvent(scrollEvent);
+}
+
+TextWindow::TextWindow() {
+    content = nullptr;
+    viewX = 0;
+    viewY = 0;
+}
+
+void TextWindow::setText(const char* newContent) {
+    content = newContent;
+}
+
+void TextWindow::setViewportPosition(int x, int y) {
+    viewX = x;
+    viewY = y;
+}
+
+void TextWindow::draw() {
+    viewport.create(width, height);
+    RenderEngine::SetRenderTarget(&viewport);
+    RenderEngine::DrawText(-viewX, -viewY, content);
+    RenderEngine::RenderToMain();
+    RenderEngine::DrawRenderTarget(x, y, viewport);
+}
+
+ScrollbarBackground::ScrollbarBackground(bool isHorizontal) : isHorizontal(isHorizontal) {
+    eventMask = EV_MOUSE_KEY_RELEASE;
+}
+
+void ScrollbarBackground::handleEvent(Event ev) {
+    Scrollbar* p = static_cast<Scrollbar*>(parent);  // Believe me
+    if (!parent) return;
+
+    if (ev.eventType == EV_MOUSE_KEY_RELEASE && isInside(ev.mouse.x, ev.mouse.y) && !p->isInsideSlider(ev.mouse.x, ev.mouse.y)) {
+        printf("Scrollbar background had received an interesting event!\n");
+        int coord = 0;
+        if (isHorizontal) {
+            coord = ev.mouse.x;
+        } else {
+            coord = ev.mouse.y;
+        }
+
+        Event newEv;
+        newEv.eventType = EV_SCROLL;
+
+        if (coord < p->getSliderPositionAlongAxis()) {
+            newEv.scroll.scrollType = Event::PG_UP;
+        } else {
+            newEv.scroll.scrollType = Event::PG_DOWN;
+        }
+
+        p->processEvent(newEv);
+    }
 }
