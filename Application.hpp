@@ -39,6 +39,7 @@ void Application::Init() {
 
     ScrollbarManager *scr = new ScrollbarManager(true, true);
     scr->adjustScrollbarSize(50, 50, 700, 500);
+    scr->adjustScrollableAreaSize(720, 5500);
     
     // TODO setProperty functions overload 
     scr->horizontal->setBackgroundColor(defBkg);
@@ -51,15 +52,15 @@ void Application::Init() {
     scr->vertical->setPressColor(pressBkg);
     scr->vertical->setOutlineColor(pressBkg);
 
-    scr->horizontal->setSliderSize(50);
-    scr->vertical->setSliderSize(50);
+    // scr->horizontal->setSliderSize(50);
+    // scr->vertical->setSliderSize(50);
 
     TextWindow *text = new TextWindow;
     text->updateEventMask(EV_SCROLL);
     text->setText(poem);
     text->setSize(700, 500);
     text->setPosition(50, 50);
-    text->setViewportSpan(800, 2000);
+    text->setViewportSpan(720, 5500);
     text->setViewportPosition(0, 0);
     text->setBackgroundColor(defBkg);
     text->setOutlineColor(pressBkg);

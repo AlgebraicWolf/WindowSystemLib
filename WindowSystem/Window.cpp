@@ -6,6 +6,8 @@
 
 // AbstractWindow methods
 
+constexpr unsigned int scrollbarElemSize = 25;
+
 void AbstractWindow::draw() {
 }
 
@@ -157,6 +159,14 @@ bool Rectangle::isInsideRect(int x, int y) {
     return (xstart <= x) && (ystart <= y) && (xend >= x) && (yend >= y);
 }
 
+int Rectangle::getWidth() {
+    return width;
+}
+
+int Rectangle::getHeight() {
+    return height;
+}
+
 // RectangleButton methods
 void RectangleButton::draw() {
     RenderEngine::DrawRect(x, y, width, height, bkg, frg, thickness);
@@ -269,17 +279,17 @@ void Slider::handleEvent(Event ev) {
 
             case Event::PG_UP:
                 if (isHorizontal) {
-                    x -= 30;
+                    x -= width;
                 } else {
-                    y -= 30;
+                    y -= height;
                 }
                 break;
 
             case Event::PG_DOWN:
                 if (isHorizontal) {
-                    x += 30;
+                    x += width;
                 } else {
-                    y += 30;
+                    y += height;
                 }
                 break;
 
@@ -336,13 +346,13 @@ Scrollbar::Scrollbar(int length, bool isHorizontal) : isHorizontal(isHorizontal)
     attachChild(down);
     attachChild(slider);
 
-    up->setSize(20, 20);
-    down->setSize(20, 20);
+    up->setSize(scrollbarElemSize, scrollbarElemSize);
+    down->setSize(scrollbarElemSize, scrollbarElemSize);
 
     if (isHorizontal) {
-        bkg->setSize(length, 20);
+        bkg->setSize(length, scrollbarElemSize);
     } else {
-        bkg->setSize(20, length);
+        bkg->setSize(scrollbarElemSize, length);
     }
 
     up->setThickness(-1);
@@ -360,10 +370,12 @@ void Scrollbar::handleEvent(Event ev) {
         fprintf(stderr, "THAT IS A GODDAMN SCROLL EVENT!\n");
         if (isHorizontal) {
             ev.scroll.isHorizontal = true;
-            ev.scroll.position = ((float)slider->x - slider->pivot) / slider->limit;
+            ev.scroll.position = ((float)slider->x - slider->pivot) / (slider->limit + slider->width);
+            
         } else {
             ev.scroll.isHorizontal = false;
-            ev.scroll.position = ((float)slider->y - slider->pivot) / slider->limit;
+            ev.scroll.position = ((float)slider->y - slider->pivot) / (slider->limit + slider->height);
+            fprintf(stderr, "Scroll pos: %f\n", ev.scroll.position);
         }
 
         parent->processEvent(ev);
@@ -373,19 +385,19 @@ void Scrollbar::handleEvent(Event ev) {
 void Scrollbar::setLength(int length) {
     this->length = length;
     if (isHorizontal) {
-        bkg->setSize(length, 20);
+        bkg->setSize(length, scrollbarElemSize);
     } else {
-        bkg->setSize(20, length);
+        bkg->setSize(scrollbarElemSize, length);
     }
     setPosition(x, y);
 }
 
 void Scrollbar::setSliderSize(int size) {
     if (isHorizontal) {
-        slider->setSize(size, 20);
+        slider->setSize(size, scrollbarElemSize);
 
     } else {
-        slider->setSize(20, size);
+        slider->setSize(scrollbarElemSize, size);
     }
 
     slider->setLimit(length - size);
@@ -397,13 +409,13 @@ void Scrollbar::setPosition(int x, int y) {
 
     up->setPosition(x, y);
     if (isHorizontal) {
-        bkg->setPosition(x + 20, y);
-        slider->setPosition(x + 20, y);
-        down->setPosition(x + 20 + length, y);
+        bkg->setPosition(x + scrollbarElemSize, y);
+        slider->setPosition(x + scrollbarElemSize, y);
+        down->setPosition(x + scrollbarElemSize + length, y);
     } else {
-        bkg->setPosition(x, y + 20);
-        slider->setPosition(x, y + 20);
-        down->setPosition(x, y + 20 + length);
+        bkg->setPosition(x, y + scrollbarElemSize);
+        slider->setPosition(x, y + scrollbarElemSize);
+        down->setPosition(x, y + scrollbarElemSize + length);
     }
 }
 
@@ -439,6 +451,14 @@ bool Scrollbar::isInsideSlider(int x, int y) {
 
 int Scrollbar::getSliderPositionAlongAxis() {
     return slider->getPositionAlongAxis();
+}
+
+int Scrollbar::getBkgLength() {
+    if (isHorizontal) {
+        return bkg->getWidth();
+    } else {
+        return bkg->getHeight();
+    }
 }
 
 // Scrollbar button methods
@@ -525,14 +545,27 @@ void ScrollbarManager::processEvent(Event ev) {
 // TODO Turn this goddamn scrollbar width into a parameter, not a fucking magic number
 
 void ScrollbarManager::adjustScrollbarSize(int x, int y, int width, int height) {
+    adjWidth = width;
+    adjHeight = height;
+
     if (horizontal) {
         horizontal->setPosition(x, y + height);
-        horizontal->setLength(width - 40);
+        horizontal->setLength(width - 2 * scrollbarElemSize);
     }
 
     if (vertical) {
         vertical->setPosition(x + width, y);
-        vertical->setLength(height - 40);
+        vertical->setLength(height - 2 * scrollbarElemSize);
+    }
+}
+
+void ScrollbarManager::adjustScrollableAreaSize(int width, int height) {
+    if (horizontal) {
+        horizontal->setSliderSize(static_cast<double>(adjWidth) / (width) * horizontal->getBkgLength());
+    }
+
+    if (vertical) {
+        vertical->setSliderSize(static_cast<double>(adjHeight) / (height) * vertical->getBkgLength());
     }
 }
 

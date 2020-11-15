@@ -43,6 +43,8 @@ class Rectangle {
     void setOutlineColor(const Color &color);               // Color of the rectangle outline
     void setThickness(float thickness);                     // Outline thickness
     bool isInsideRect(int x, int y);
+    int getHeight();
+    int getWidth();
 
    protected:
     int x;
@@ -162,6 +164,7 @@ class Scrollbar : public ContainerWindow {
     bool isInsideSlider(int x, int y);
     int getSliderPositionAlongAxis();
     void setLength(int length);
+    int getBkgLength();
 
    private:
     virtual void handleEvent(Event ev) override;
@@ -200,12 +203,15 @@ class ScrollbarManager : public ContainerWindow {
    public:
     ScrollbarManager(bool horizontalScrollable, bool verticalScrollable);
     void adjustScrollbarSize(int x, int y, int width, int height);
+    void adjustScrollableAreaSize(int width, int height);  // Adjusts scrollbar properties to the size of the scrollable area
     virtual void draw() override;
     Scrollbar *horizontal;
     Scrollbar *vertical;
     virtual void processEvent(Event ev) override;  // Event redirector
 
    private:
+    int adjWidth;
+    int adjHeight;
 };
 
 #endif  // WINDOW_HPP_
