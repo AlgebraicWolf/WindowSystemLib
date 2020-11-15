@@ -62,14 +62,16 @@ class RectangleWindow : public ContainerWindow, public Rectangle {
 
 class AbstractButton : public AbstractWindow {
    public:
-    AbstractButton();                             // Button constructor that shall initialize fields of integral types and subscribe to events
-    virtual void click() = 0;                         // Click payload
-    virtual void onHoverEnter() = 0;                  // Hover enter payload
-    virtual void onHoverExit() = 0;                   // Hover exit payload
-    virtual void onButtonPress() = 0;                 // Button pressdown payload
-    void setHoverColor(const Color &color);       // Set button hover color
-    void setPressColor(const Color &color);       // Set button press color
-    void setBackgroundColor(const Color &color);  // Set color for chillin' button
+    AbstractButton();                                   // Button constructor that shall initialize fields of integral types and subscribe to events
+    virtual void click(const Event &ev) = 0;            // Click payload
+    virtual void onHoverEnter(const Event &ev) = 0;     // Hover enter payload
+    virtual void onHoverExit(const Event &ev) = 0;      // Hover exit payload
+    virtual void onButtonPress(const Event &ev) = 0;    // Button pressdown payload
+    virtual void onMouseMove(const Event &ev) = 0;      // Arbitrary mouse move
+    virtual void onButtonRelease(const Event &ev) = 0;  // Mouse button release
+    void setHoverColor(const Color &color);             // Set button hover color
+    void setPressColor(const Color &color);             // Set button press color
+    void setBackgroundColor(const Color &color);        // Set color for chillin' button
 
     virtual void attachToParent(AbstractWindow *parent) override;  // Function that attaches this window to some other window
     //  virtual bool isInside(int x, int y) ;                           // Function that checks intersection of a pixel with a button
@@ -91,10 +93,12 @@ class RectangleButton : public AbstractButton, public Rectangle {
     void setPressColor(const Color &color);       // Set button press color
     void setBackgroundColor(const Color &color);  // Set color for chillin' button
 
-    virtual void click() override;          // Click payload
-    virtual void onHoverEnter() override;   // Hover enter payload
-    virtual void onHoverExit() override;    // Hover exit payload
-    virtual void onButtonPress() override;  // Button pressdown payload
+    virtual void click(const Event &ev) override;            // Click payload
+    virtual void onHoverEnter(const Event &ev) override;     // Hover enter payload
+    virtual void onHoverExit(const Event &ev) override;      // Hover exit payload
+    virtual void onButtonPress(const Event &ev) override;    // Button pressdown payload
+    virtual void onMouseMove(const Event &ev) override;      // Arbitrary mouse move event
+    virtual void onButtonRelease(const Event &ev) override;  // Mouse button release
     virtual bool isInside(int x, int y) override;
     virtual void draw() override;
 
@@ -112,6 +116,10 @@ class Slider : public RectangleButton {
     void setPosition(int x, int y);  // Sets position of the rectangle window
     int getPositionAlongAxis();
 
+    virtual void onButtonPress(const Event &ev) override;    // Button pressdown payload
+    virtual void onMouseMove(const Event &ev) override;      // Arbitrary mouse move event
+    virtual void onButtonRelease(const Event &ev) override;  // Mouse button release
+
    private:
     virtual void handleEvent(Event ev) override;  // handleEvent should be overriden in order to allow for proper movement
     int pivot;                                    // Coordinates of the beginning
@@ -128,7 +136,7 @@ class ScrollbarButton : public RectangleButton {
     ScrollbarButton(bool isUp);
 
    private:
-    virtual void click();
+    virtual void click(const Event &ev) override;
     bool isUp;
 };
 
@@ -166,6 +174,8 @@ class Scrollbar : public ContainerWindow {
 
     bool isHorizontal;
     int length;  // Height of the active part of the slider
+
+    friend class Slider;
 };
 
 // Non-owning text window

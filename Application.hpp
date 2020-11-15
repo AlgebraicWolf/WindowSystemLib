@@ -40,6 +40,7 @@ void Application::Init() {
     ScrollbarManager *scr = new ScrollbarManager(true, true);
     scr->adjustScrollbarSize(50, 50, 700, 500);
     
+    // TODO setProperty functions overload 
     scr->horizontal->setBackgroundColor(defBkg);
     scr->horizontal->setHoverColor(hoverBkg);
     scr->horizontal->setPressColor(pressBkg);

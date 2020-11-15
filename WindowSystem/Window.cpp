@@ -95,23 +95,25 @@ void AbstractButton::handleEvent(Event ev) {
             hovered = true;
             if (!pressed) {
                 pressed = true;
-                onButtonPress();
+                onButtonPress(ev);
             }
         } else if (ev.eventType == EV_MOUSE_KEY_RELEASE && pressed) {
-            if (inside) click();
+            onButtonRelease(ev);
+            if (inside) click(ev);
             pressed = false;
         } else if (ev.eventType == EV_MOUSE_MOVE) {
             if (inside) {
                 if (!hovered) {
                     hovered = true;
-                    onHoverEnter();
+                    onHoverEnter(ev);
                 }
             } else {
                 if (hovered) {
                     hovered = false;
-                    onHoverExit();
+                    onHoverExit(ev);
                 }
             }
+            onMouseMove(ev);
         }
     }
 }
@@ -172,19 +174,19 @@ void RectangleButton::setPressColor(const Color& color) {
     pressBkg = color;
 }
 
-void RectangleButton::click() {
+void RectangleButton::click(const Event&) {
     printf("Abstract button %p just got clicked\n", static_cast<void*>(this));
 }
 
-void RectangleButton::onHoverEnter() {
+void RectangleButton::onHoverEnter(const Event&) {
     bkg = hoverBkg;
 }
 
-void RectangleButton::onHoverExit() {
+void RectangleButton::onHoverExit(const Event&) {
     bkg = defaultBkg;
 }
 
-void RectangleButton::onButtonPress() {
+void RectangleButton::onButtonPress(const Event&) {
     bkg = pressBkg;
 }
 
@@ -192,6 +194,10 @@ void RectangleButton::setBackgroundColor(const Color& color) {
     defaultBkg = color;
     bkg = color;
 }
+
+void RectangleButton::onButtonRelease(const Event&) {}
+
+void RectangleButton::onMouseMove(const Event&) {}
 
 bool RectangleButton::isInside(int x, int y) {
     return Rectangle::isInsideRect(x, y);
@@ -217,38 +223,32 @@ void Slider::setLimit(int limit) {
     this->limit = limit;
 }
 
-// TODO rewrite this using shiny new mouse shit
+void Slider::onButtonPress(const Event& ev) {
+    if (isHorizontal) {
+        strokeStart = ev.mouse.x;
+        movementStart = x;
+    } else {
+        strokeStart = ev.mouse.y;
+        movementStart = y;
+    }
+}
+
+void Slider::onButtonRelease(const Event&) {
+}
+
+void Slider::onMouseMove(const Event& ev) {
+    if (pressed) {
+        if (isHorizontal) {
+            x = movementStart + ev.mouse.x - strokeStart;
+        } else {
+            y = movementStart + ev.mouse.y - strokeStart;
+        }
+    }
+}
+
 void Slider::handleEvent(Event ev) {
     if (IS_MOUSE_EV(ev)) {
-        bool inside = isInside(ev.mouse.x, ev.mouse.y);
-
-        if (pressed) {
-            if (isHorizontal) {
-                x = movementStart + ev.mouse.x - strokeStart;
-            } else {
-                y = movementStart + ev.mouse.y - strokeStart;
-            }
-        }
-
-        if (ev.eventType == EV_MOUSE_KEY_PRESS && inside) {
-            hovered = true;
-            pressed = true;
-            if (isHorizontal) {
-                strokeStart = ev.mouse.x;
-                movementStart = x;
-            } else {
-                strokeStart = ev.mouse.y;
-                movementStart = y;
-            }
-        } else if (ev.eventType == EV_MOUSE_KEY_RELEASE && pressed) {
-            pressed = false;
-        } else if (ev.eventType == EV_MOUSE_MOVE) {
-            if (inside) {
-                hovered = true;
-            } else {
-                hovered = false;
-            }
-        }
+        AbstractButton::handleEvent(ev);
     } else if (ev.eventType == EV_SCROLL) {
         switch (ev.scroll.scrollType) {
             case Event::UP:
@@ -307,6 +307,13 @@ void Slider::handleEvent(Event ev) {
     } else {
         bkg = defaultBkg;
     }
+
+    Event scrollEv;
+    scrollEv.eventType = EV_SCROLL;
+
+    Scrollbar* sParent = dynamic_cast<Scrollbar*>(parent);
+    sParent->handleEvent(scrollEv);
+    fprintf(stderr, "%p %p\n", static_cast<void*>(this), static_cast<void*>(sParent));
 }
 
 int Slider::getPositionAlongAxis() {
@@ -348,8 +355,9 @@ Scrollbar::Scrollbar(int length, bool isHorizontal) : isHorizontal(isHorizontal)
 
 void Scrollbar::handleEvent(Event ev) {
     if (!parent) return;
-
+    fprintf(stderr, "Scrollbar %p processing event of type %lu\n", static_cast<void*>(this), ev.eventType);
     if (ev.eventType == EV_SCROLL) {
+        fprintf(stderr, "THAT IS A GODDAMN SCROLL EVENT!\n");
         if (isHorizontal) {
             ev.scroll.isHorizontal = true;
             ev.scroll.position = ((float)slider->x - slider->pivot) / slider->limit;
@@ -436,7 +444,7 @@ int Scrollbar::getSliderPositionAlongAxis() {
 // Scrollbar button methods
 ScrollbarButton::ScrollbarButton(bool isUp) : isUp(isUp) {}
 
-void ScrollbarButton::click() {
+void ScrollbarButton::click(const Event&) {
     if (!parent)
         return;
 
