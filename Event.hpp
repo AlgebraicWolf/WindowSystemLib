@@ -35,6 +35,7 @@ struct Event {
     struct Scroll {
         SCROLL scrollType;
         float position;
+        bool isHorizontal;
     };
 
     // Member data
@@ -43,6 +44,7 @@ struct Event {
         Mouse mouse;
         Keyboard keyboard;
         Scroll scroll;
+        
     };
 };
 #endif  // EVENT_HPP_

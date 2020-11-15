@@ -30,21 +30,19 @@ class ContainerWindow : public AbstractWindow {
     void attachChild(AbstractWindow *win);
     virtual ~ContainerWindow();
 
-   private:
+   protected:
     std::list<AbstractWindow *> children;
 };
 
-// Container window that can be represented as a rectangle
-class RectangleWindow : public ContainerWindow {
+// Class of a rectangle primitive
+class Rectangle {
    public:
     void setPosition(int x, int y);                         // Sets position of the rectangle window
     void setSize(unsigned int width, unsigned int height);  // Sets dimensions of the window
     void setBackgroundColor(const Color &color);            // Color of the rectangle itself
     void setOutlineColor(const Color &color);               // Color of the rectangle outline
     void setThickness(float thickness);                     // Outline thickness
-    bool isInside(unsigned int x, unsigned int y);          // Checks whether the given point is inside the button
-
-    virtual void draw();  // Function that draws the rectangle window
+    bool isInsideRect(int x, int y);
 
    protected:
     int x;
@@ -56,28 +54,58 @@ class RectangleWindow : public ContainerWindow {
     Color frg;  // Color of the outline
 };
 
-class AbstractButton : public RectangleWindow {
+// Container window that can be represented as a rectangle
+class RectangleWindow : public ContainerWindow, public Rectangle {
+   public:
+    virtual void draw();  // Function that draws the rectangle window
+};
+
+class AbstractButton : public AbstractWindow {
    public:
     AbstractButton();                             // Button constructor that shall initialize fields of integral types and subscribe to events
-    virtual void click();                         // Click payload
+    virtual void click() = 0;                         // Click payload
+    virtual void onHoverEnter() = 0;                  // Hover enter payload
+    virtual void onHoverExit() = 0;                   // Hover exit payload
+    virtual void onButtonPress() = 0;                 // Button pressdown payload
     void setHoverColor(const Color &color);       // Set button hover color
     void setPressColor(const Color &color);       // Set button press color
     void setBackgroundColor(const Color &color);  // Set color for chillin' button
 
     virtual void attachToParent(AbstractWindow *parent) override;  // Function that attaches this window to some other window
+    //  virtual bool isInside(int x, int y) ;                           // Function that checks intersection of a pixel with a button
+    virtual bool isInside(int x, int y) = 0;
 
    protected:
     virtual void handleEvent(Event ev) override;  // New event handler
-    Color hoverBkg;                               // Color of the button when it is being hovered over
-    Color pressBkg;                               // Color of the button when it is being pressed on
-    Color defaultBkg;                             // Color of button when it's chillin'
+                                                  //  Color hoverBkg;                               // Color of the button when it is being hovered over
+                                                  //  Color pressBkg;                               // Color of the button when it is being pressed on
+                                                  //  Color defaultBkg;                             // Color of button when it's chillin'
 
     bool hovered;  // Button is currently hovered over
     bool pressed;  // Button is currently being pressed down
 };
 
+class RectangleButton : public AbstractButton, public Rectangle {
+   public:
+    void setHoverColor(const Color &color);       // Set button hover color
+    void setPressColor(const Color &color);       // Set button press color
+    void setBackgroundColor(const Color &color);  // Set color for chillin' button
+
+    virtual void click() override;          // Click payload
+    virtual void onHoverEnter() override;   // Hover enter payload
+    virtual void onHoverExit() override;    // Hover exit payload
+    virtual void onButtonPress() override;  // Button pressdown payload
+    virtual bool isInside(int x, int y) override;
+    virtual void draw() override;
+
+   protected:
+    Color hoverBkg;
+    Color pressBkg;
+    Color defaultBkg;
+};
+
 // Slider -- control that can be moved either horizontally of vertically
-class Slider : public AbstractButton {
+class Slider : public RectangleButton {
    public:
     Slider(bool isHorizontal);
     void setLimit(int limit);
@@ -91,9 +119,11 @@ class Slider : public AbstractButton {
     int movementStart;                            // Coordinate of the scrollbar in the beginning of the stroke
     int limit;                                    // Amount of movement to allow for
     bool isHorizontal;                            // Is slider horizontal or vertical
+
+    friend class Scrollbar;
 };
 
-class ScrollbarButton : public AbstractButton {
+class ScrollbarButton : public RectangleButton {
    public:
     ScrollbarButton(bool isUp);
 
@@ -123,8 +153,12 @@ class Scrollbar : public ContainerWindow {
     void setBackgroundColor(const Color &color);  // Set color for chillin' button
     bool isInsideSlider(int x, int y);
     int getSliderPositionAlongAxis();
+    void setLength(int length);
 
    private:
+    virtual void handleEvent(Event ev) override;
+    int x;
+    int y;
     ScrollbarButton *up;
     ScrollbarButton *down;
     ScrollbarBackground *bkg;
@@ -138,15 +172,30 @@ class Scrollbar : public ContainerWindow {
 class TextWindow : public RectangleWindow {
    public:
     TextWindow();
-    void setText(const char *newContent);
+    void setText(const wchar_t *newContent);
     void setViewportPosition(int x, int y);
-    virtual void draw();
+    void setViewportSpan(int spanX, int spanY);
+    virtual void draw() override;
 
    private:
+    virtual void handleEvent(Event ev) override;
     int viewX;
     int viewY;
-    const char *content;
-    OffScreenRenderTarget viewport;
+    int spanX;
+    int spanY;
+    const wchar_t *content;
+};
+
+class ScrollbarManager : public ContainerWindow {
+   public:
+    ScrollbarManager(bool horizontalScrollable, bool verticalScrollable);
+    void adjustScrollbarSize(int x, int y, int width, int height);
+    virtual void draw() override;
+    Scrollbar *horizontal;
+    Scrollbar *vertical;
+    virtual void processEvent(Event ev) override;  // Event redirector
+
+   private:
 };
 
 #endif  // WINDOW_HPP_

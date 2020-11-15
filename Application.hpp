@@ -2,6 +2,8 @@
 #define APPLICATION_HPP_
 #include "SFMLRenderEngine/RenderEngine.hpp"
 #include "WindowSystem/Window.hpp"
+#include "Poem.h"
+
 
 // Singletone application class
 class Application {
@@ -25,17 +27,46 @@ void Application::Init() {
     Color hoverBkg = {100, 100, 100, 255};
     Color pressBkg = {255, 255, 255, 255};
 
-    Scrollbar *scrollbar = new Scrollbar(250, false);
-    scrollbar->setSliderSize(50);
-    scrollbar->setPosition(50, 50);
+    // Scrollbar *scrollbar = new Scrollbar(250, false);
+    // scrollbar->setSliderSize(50);
+    // scrollbar->setPosition(50, 50);
 
-    scrollbar->setBackgroundColor(defBkg);
-    scrollbar->setHoverColor(hoverBkg);
-    scrollbar->setPressColor(pressBkg);
+    // scrollbar->setBackgroundColor(defBkg);
+    // scrollbar->setHoverColor(hoverBkg);
+    // scrollbar->setPressColor(pressBkg);
 
-    scrollbar->setOutlineColor(pressBkg);
+    // scrollbar->setOutlineColor(pressBkg);
 
-    rootWindow->attachChild(scrollbar);
+    ScrollbarManager *scr = new ScrollbarManager(true, true);
+    scr->adjustScrollbarSize(50, 50, 700, 500);
+    
+    scr->horizontal->setBackgroundColor(defBkg);
+    scr->horizontal->setHoverColor(hoverBkg);
+    scr->horizontal->setPressColor(pressBkg);
+    scr->horizontal->setOutlineColor(pressBkg);
+
+    scr->vertical->setBackgroundColor(defBkg);
+    scr->vertical->setHoverColor(hoverBkg);
+    scr->vertical->setPressColor(pressBkg);
+    scr->vertical->setOutlineColor(pressBkg);
+
+    scr->horizontal->setSliderSize(50);
+    scr->vertical->setSliderSize(50);
+
+    TextWindow *text = new TextWindow;
+    text->updateEventMask(EV_SCROLL);
+    text->setText(poem);
+    text->setSize(700, 500);
+    text->setPosition(50, 50);
+    text->setViewportSpan(800, 2000);
+    text->setViewportPosition(0, 0);
+    text->setBackgroundColor(defBkg);
+    text->setOutlineColor(pressBkg);
+    text->setThickness(1);
+
+    scr->attachChild(text);
+    rootWindow->attachChild(scr);
+    
 
     // AbstractButton *but1 = new AbstractButton;
     // but1->setBackgroundColor(defBkg);

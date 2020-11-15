@@ -3,11 +3,16 @@
 #include "RenderEngine.hpp"
 
 sf::RenderWindow RenderEngine::mainWindow;
-RenderTarget* RenderEngine::currentTarget;
+sf::RenderTarget* RenderEngine::currentTarget;
+sf::RenderTexture RenderEngine::offScreenTarget;
 sf::Font RenderEngine::defaultFont;
 
 void RenderEngine::Init(unsigned int width, unsigned int height) {
     mainWindow.create(sf::VideoMode(width, height), "My window system", sf::Style::None);
+    if(!defaultFont.loadFromFile("default.ttf")) {
+        printf("Unable to load font\n");
+        exit(-1);
+    }
     currentTarget = &mainWindow;
 }
 
@@ -110,23 +115,34 @@ void RenderEngine::DrawRect(int x, int y,
     mainWindow.draw(rect);
 }
 
-void RenderEngine::DrawText(int x, int y, const char* text) {
+void RenderEngine::DrawText(int x, int y, const wchar_t* text) {
     sf::Text txt(text, defaultFont);
     txt.setPosition(x, y);
     txt.setFillColor(sf::Color::White);
+    txt.setFont(defaultFont);
     currentTarget->draw(txt);
 }
 
-void RenderEngine::DrawRenderTarget(int x, int y, const OffScreenRenderTarget& from) {
-    sf::Sprite sprite(from.getTexture());
-    sprite.setPosition(x, y);
-    currentTarget->draw(sprite);
+void RenderEngine::InitOffScreen(unsigned int width, unsigned int height) {
+    // printf("Initializing off-screen buffer of size(%u, %u)\n", width, height);
+    offScreenTarget.create(width,  height);
+    offScreenTarget.clear();
+
+    // sf::VertexArray lines(sf::Triangles, 3);
+    // lines[0].position = sf::Vector2f(100, 0);
+    // lines[1].position = sf::Vector2f(200, 0);
+    // lines[2].position = sf::Vector2f(150, 100);
+    // offScreenTarget.draw(lines);
+
+    currentTarget = &offScreenTarget;
 }
 
-void RenderEngine::RenderToMain() {
+void RenderEngine::FlushOffScreen(int x, int y) {
+    offScreenTarget.display();
+    // printf("Flushin off-screen buffer at coordinates (%d, %d)\n", x, y);
+    sf::Sprite offScreenTargetSprite(offScreenTarget.getTexture());
+    offScreenTargetSprite.setPosition(x, y);
+    mainWindow.draw(offScreenTargetSprite);
+
     currentTarget = &mainWindow;
-}
-
-void RenderEngine::SetRenderTarget(RenderTarget* target) {
-    currentTarget = target;
 }
