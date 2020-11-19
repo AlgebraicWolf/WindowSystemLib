@@ -6,6 +6,8 @@
 
 // AbstractWindow methods
 
+
+
 constexpr unsigned int scrollbarElemSize = 25;
 
 void AbstractWindow::draw() {
@@ -371,7 +373,7 @@ void Scrollbar::handleEvent(Event ev) {
         if (isHorizontal) {
             ev.scroll.isHorizontal = true;
             ev.scroll.position = ((float)slider->x - slider->pivot) / (slider->limit + slider->width);
-            
+
         } else {
             ev.scroll.isHorizontal = false;
             ev.scroll.position = ((float)slider->y - slider->pivot) / (slider->limit + slider->height);
@@ -561,11 +563,11 @@ void ScrollbarManager::adjustScrollbarSize(int x, int y, int width, int height) 
 
 void ScrollbarManager::adjustScrollableAreaSize(int width, int height) {
     if (horizontal) {
-        horizontal->setSliderSize(static_cast<double>(adjWidth) / (width) * horizontal->getBkgLength());
+        horizontal->setSliderSize(static_cast<double>(adjWidth) / (width)*horizontal->getBkgLength());
     }
 
     if (vertical) {
-        vertical->setSliderSize(static_cast<double>(adjHeight) / (height) * vertical->getBkgLength());
+        vertical->setSliderSize(static_cast<double>(adjHeight) / (height)*vertical->getBkgLength());
     }
 }
 
@@ -604,20 +606,50 @@ void TextWindow::setViewportSpan(int x, int y) {
 
 void TextWindow::draw() {
     // printf("Drawing text \"%s\" at (%d, %d)\n", content, x, y);
-    RenderEngine::InitOffScreen(width, height);
-    RenderEngine::DrawText(-viewX, -viewY, content);
-    RenderEngine::FlushOffScreen(x, y);
-    RenderEngine::DrawRect(x, y, width, height, bkg, frg, thickness);
+    // RenderEngine::InitOffScreen(width, height);
+    RenderEngine::DrawText(x, y, content);
+    // RenderEngine::FlushOffScreen(x, y);
+    // RenderEngine::DrawRect(x, y, width, height, bkg, frg, thickness);
 }
 
-void TextWindow::handleEvent(Event ev) {
-    if (ev.eventType == EV_SCROLL) {
-        if (ev.scroll.isHorizontal) {
-            viewX = ev.scroll.position * spanX;
-        } else {
-            viewY = ev.scroll.position * spanY;
-        }
-    }
+// Vector2:
+template<typename T>
+Vector2<T>::Vector2() : x(0), y(0) {}
+
+template<typename T>
+Vector2<T>::Vector2(const T& x, const T& y) : x(x), y(y) {}
+
+template struct Vector2<int>;
+// Viewport container
+
+void Viewport::setPosition(const Vector2<int>& pos) {
+    this->position = pos;
+}
+
+void Viewport::setSpan(const Vector2<int>& span) {
+    this->span = span;
+}
+
+void Viewport::setSize(const Vector2<int>& size) {
+    this->size = size;
+}
+
+void Viewport::handleEvent(Event ev) {
+    // if (ev.eventType == EV_SCROLL) {
+    //     if (ev.scroll.isHorizontal) {
+    //         viewX = ev.scroll.position * spanX;
+    //     } else {
+    //         viewY = ev.scroll.position * spanY;
+    //     }
+    // }
+}
+
+void Viewport::draw() {
+    RenderEngine::InitOffScreen(size.x, size.y);
+
+    ContainerWindow::draw();
+
+    RenderEngine::FlushOffScreen(position.x, position.y);
 }
 
 // P. S.: it's a mess, destroy this abomination

@@ -5,6 +5,16 @@
 #include "../Event.hpp"
 #include "../SFMLRenderEngine/RenderEngine.hpp"
 
+// Vector class for coordinate-like shit
+// TODO Rewrite all things like (x, y), (width, height), etc. using this wonderful class
+template <typename T>
+struct Vector2 {
+    T x;
+    T y;
+    Vector2();                        // Default constructor
+    Vector2(const T &x, const T &y);  // Constructor with values
+};
+
 // Abstract window that can handle an event
 class AbstractWindow {
    public:
@@ -191,7 +201,7 @@ class TextWindow : public RectangleWindow {
     virtual void draw() override;
 
    private:
-    virtual void handleEvent(Event ev) override;
+    // virtual void handleEvent(Event ev) override;
     int viewX;
     int viewY;
     int spanX;
@@ -212,6 +222,23 @@ class ScrollbarManager : public ContainerWindow {
    private:
     int adjWidth;
     int adjHeight;
+};
+
+// Class for an offscreen drawing of its contents. Window supports scrolling. The contents of children must be treated as relative to the Viewport position
+class Viewport : public ContainerWindow {
+   public:
+    void setPosition(const Vector2<int> &pos);
+    void setSpan(const Vector2<int> &span);
+    void setSize(const Vector2<int> &size);
+    virtual void draw() override;
+
+   protected:
+    virtual void handleEvent(Event ev) override;
+
+    Vector2<int> position;      // Position on the screen where it is rendered to
+    Vector2<int> viewPosition;  // Position of the view in coordinate system of the contents
+    Vector2<int> size;          // Size of the viewport
+    Vector2<int> span;          // Span of the viewport to move along
 };
 
 #endif  // WINDOW_HPP_
