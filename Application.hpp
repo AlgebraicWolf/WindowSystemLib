@@ -1,9 +1,10 @@
 #ifndef APPLICATION_HPP_
 #define APPLICATION_HPP_
+#include <cstdio>
+
+#include "Poem.h"
 #include "SFMLRenderEngine/RenderEngine.hpp"
 #include "WindowSystem/Window.hpp"
-#include "Poem.h"
-
 
 // Singletone application class
 class Application {
@@ -12,6 +13,7 @@ class Application {
     static void Finalize();
     static bool Run();
     static void Attach(AbstractWindow *win);
+    static void DumpHierarchy(const char *filename);
 
    private:
     static ContainerWindow *rootWindow;
@@ -32,6 +34,18 @@ void Application::Init() {
 void Application::Finalize() {
     delete rootWindow;
     RenderEngine::Finalize();
+}
+
+void Application::DumpHierarchy(const char *filename) {
+    FILE *f = fopen(filename, "w");
+    if (!f) {
+        fprintf(stderr, "Unable to open dump file\n");
+    }
+
+    fprintf(f, "digraph {\n");
+    rootWindow->dump(f);
+    fprintf(f, "}\n");
+    fclose(f);
 }
 
 bool Application::Run() {

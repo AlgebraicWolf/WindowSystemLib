@@ -29,12 +29,10 @@ int main() {
     view->setSize(Vector2<int>(700, 500));
     view->setSpan(Vector2<int>(720, 5500));
 
-    text->updateEventMask(EV_SCROLL);
+    view->updateEventMask(EV_SCROLL);
     text->setText(poem);
     text->setSize(720, 5500);
     text->setPosition(0, 0);
-    text->setViewportSpan(720, 5500);
-    text->setViewportPosition(0, 0);
     text->setBackgroundColor(defBkg);
     text->setOutlineColor(pressBkg);
     text->setThickness(-1);
@@ -43,6 +41,8 @@ int main() {
 
     scr->attachChild(view);
     Application::Attach(scr);
+
+    Application::DumpHierarchy("dump.dot");
 
     while (Application::Run()) {}
 

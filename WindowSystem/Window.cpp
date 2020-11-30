@@ -1,18 +1,102 @@
 #include "Window.hpp"
 
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
+
+const char* uint64_to_bin(uint64_t val) {
+    char *bin = new char[64];
+    for (uint64_t i = 0; i < 64; i++) {
+        bin[63 - i] = (val & (uint64_t(1) << i)) ? '1' : '0';
+    }
+
+    return bin;
+}
 
 // TODO: Should probably split this into even more files, as it becomes increasingly difficult to navigate and maintain
 
 // AbstractWindow methods
 constexpr unsigned int scrollbarElemSize = 25;
 
+void AbstractWindow::dump(FILE* f) {
+    fprintf(f, "node%p [style=\"record\", label=\"{AbstractWindow | {Event mask | %s} | {Propagation mask | }}\"]\n", static_cast<void*>(this), uint64_to_bin(eventMask));
+
+    if (parent) {
+        fprintf(f, "node%p -> node%p\n", static_cast<void*>(this), static_cast<void*>(parent));
+    }
+}
+
+#define DUMP_CONT(window)                                                                                                                                                                                        \
+    void window::dump(FILE* f) {                                                                                                                                                                                 \
+        fprintf(f, "node%p [shape=\"record\", label=\"{ " #window " | {Event mask | %s } | {Propagation mask | %s }}\"]\n", static_cast<void*>(this), uint64_to_bin(eventMask), uint64_to_bin(propagationMask)); \
+        if (parent) {                                                                                                                                                                                            \
+            fprintf(f, "node%p -> node%p\n", static_cast<void*>(this), static_cast<void*>(parent));                                                                                                              \
+        }                                                                                                                                                                                                        \
+        for (auto child : children) {                                                                                                                                                                            \
+            child->dump(f);                                                                                                                                                                                      \
+            fprintf(f, "node%p -> node%p\n", static_cast<void*>(this), static_cast<void*>(child));                                                                                                               \
+        }                                                                                                                                                                                                        \
+    }
+
+#define DUMP(window)                                                                                                                                                                                           \
+    void window::dump(FILE* f) {                                                                                                                                                                               \
+        fprintf(f, "node%p [shape=\"record\", label=\"{ " #window " | {Event mask | %s} | {Propagation mask | %s}}\"]\n", static_cast<void*>(this), uint64_to_bin(eventMask), uint64_to_bin(propagationMask)); \
+        if (parent) {                                                                                                                                                                                          \
+            fprintf(f, "node%p -> node%p\n", static_cast<void*>(this), static_cast<void*>(parent));                                                                                                            \
+        }                                                                                                                                                                                                      \
+    }
+
 void AbstractWindow::draw() {
 }
+
+DUMP_CONT(ContainerWindow);
+DUMP_CONT(RectangleWindow);
+DUMP(AbstractButton);
+DUMP(RectangleButton);
+DUMP_CONT(Scrollbar);
+DUMP(ScrollbarButton);
+DUMP(Slider);
+DUMP_CONT(ScrollbarBackground);
+DUMP_CONT(Viewport);
+DUMP_CONT(TextWindow);
+
+void ScrollbarManager::dump(FILE* f) {
+    fprintf(f, "node%p [shape=\"record\", label=\"{ ScrollbarManager | {Event mask | %s} | {Propagation mask | %s}}\"]\n", static_cast<void*>(this), uint64_to_bin(eventMask), uint64_to_bin(propagationMask));
+    if (parent) {
+        fprintf(f, "node%p -> node%p\n", static_cast<void*>(this), static_cast<void*>(parent));
+    }
+    for (auto child : children) {
+        child->dump(f);
+        fprintf(f, "node%p -> node%p\n", static_cast<void*>(this), static_cast<void*>(child));
+    }
+
+    if (horizontal) {
+        horizontal->dump(f);
+        fprintf(f, "node%p -> node%p\n", static_cast<void*>(this), static_cast<void*>(horizontal));
+    }
+
+    if (vertical) {
+        vertical->dump(f);
+        fprintf(f, "node%p -> node%p\n", static_cast<void*>(this), static_cast<void*>(vertical));
+    }
+}
+
+// void ContainerWindow::dump(FILE *f) {
+//     fprintf(f, "node%p [style=\"record\", label=\"{ ContainerWindow | {Event mask | } | {Propagation mask | }}\"]\n", this);
+
+//     if(parent) {
+//         fprintf("node%p -> node%p\n", this, parent);
+//     }
+
+//     for(auto child : children) {
+//         child->dump(f);
+//         fprintf("node%p -> node%p\n", this, child);
+//     }
+// }
 
 AbstractWindow::AbstractWindow() {
     parent = nullptr;
     eventMask = 0;
+    propagationMask = 0;
 }
 
 AbstractWindow::~AbstractWindow() {
@@ -33,13 +117,24 @@ void AbstractWindow::processEvent(Event ev) {
 
 void AbstractWindow::attachToParent(AbstractWindow* parent) {
     this->parent = parent;
-    parent->updateEventMask(eventMask);
+    parent->updatePropagationMask(eventMask | propagationMask);
+}
+
+void AbstractWindow::updatePropagationMask(uint64_t update) {
+    propagationMask |= update;
+    // eventMask |= update;
+
+    if (parent) {
+        parent->updatePropagationMask(update);
+    }
 }
 
 void AbstractWindow::updateEventMask(uint64_t update) {
     eventMask |= update;
+    // propagationMask |= update;
+
     if (parent) {
-        parent->updateEventMask(update);
+        parent->updatePropagationMask(update);
     }
 }
 
@@ -62,14 +157,14 @@ void ContainerWindow::draw() {
 }
 
 void ContainerWindow::processEvent(Event ev) {
-    if (!(ev.eventType & eventMask))
-        return;
-
-    for (auto child : children) {
-        child->processEvent(ev);
+    if (ev.eventType & propagationMask) {
+        for (auto child : children) {
+            child->processEvent(ev);
+        }
     }
 
-    handleEvent(ev);
+    if (ev.eventType & eventMask)
+        handleEvent(ev);
 }
 
 void ContainerWindow::attachChild(AbstractWindow* win) {
@@ -78,14 +173,16 @@ void ContainerWindow::attachChild(AbstractWindow* win) {
 }
 
 // AbstractButton methods
-void AbstractButton::attachToParent(AbstractWindow* parent) {
-    this->parent = parent;
-    updateEventMask(EV_MOUSE_KEY_PRESS | EV_MOUSE_KEY_RELEASE | EV_MOUSE_MOVE);  // Need to track key presses, releases & movements in order to properly update state
-}
+// void AbstractButton::attachToParent(AbstractWindow* parent) {
+//     this->parent = parent;
+//     // updateEventMask(EV_MOUSE_KEY_PRESS | EV_MOUSE_KEY_RELEASE | EV_MOUSE_MOVE);  // Need to track key presses, releases & movements in order to properly update state
+//     parent->updatePropagationMask(eventMask);
+// }
 
 AbstractButton::AbstractButton() {
     pressed = false;
     hovered = false;
+    updateEventMask(EV_MOUSE_KEY_PRESS | EV_MOUSE_KEY_RELEASE | EV_MOUSE_MOVE);
 }
 
 void AbstractButton::handleEvent(Event ev) {
@@ -226,6 +323,7 @@ void Slider::setPosition(int x, int y) {
 
 Slider::Slider(bool isHorizontal) : isHorizontal(isHorizontal) {
     eventMask |= EV_SCROLL;  // Don't want to propagate subscription
+    propagationMask |= EV_SCROLL;
 }
 
 void Slider::setLimit(int limit) {
@@ -359,7 +457,8 @@ Scrollbar::Scrollbar(int length, bool isHorizontal) : isHorizontal(isHorizontal)
     slider->setThickness(-1);
     bkg->setThickness(-1);
 
-    eventMask |= EV_SCROLL;  // Don't really want to propagate subscription to scroll event since we want
+    eventMask |= EV_SCROLL;  // Don't really want to propagate subscription to scroll event
+    propagationMask |= EV_SCROLL;
 }
 
 void Scrollbar::handleEvent(Event ev) {
@@ -461,7 +560,9 @@ int Scrollbar::getBkgLength() {
 }
 
 // Scrollbar button methods
-ScrollbarButton::ScrollbarButton(bool isUp) : isUp(isUp) {}
+ScrollbarButton::ScrollbarButton(bool isUp) : isUp(isUp) {
+    updateEventMask(EV_MOUSE_KEY_PRESS | EV_MOUSE_KEY_RELEASE | EV_MOUSE_MOVE);
+}
 
 void ScrollbarButton::click(const Event&) {
     if (!parent)
@@ -481,7 +582,7 @@ void ScrollbarButton::click(const Event&) {
 
 // ScrollbarBackground methods
 ScrollbarBackground::ScrollbarBackground(bool isHorizontal) : isHorizontal(isHorizontal) {
-    eventMask = EV_MOUSE_KEY_RELEASE;
+    updateEventMask(EV_MOUSE_KEY_RELEASE);
 }
 
 void ScrollbarBackground::handleEvent(Event ev) {
@@ -513,6 +614,7 @@ void ScrollbarBackground::handleEvent(Event ev) {
 // ScrollbarManager methods
 ScrollbarManager::ScrollbarManager(bool horizontalScrollable, bool verticalScrollable) {
     eventMask |= EV_SCROLL;  // Want to process event; don't really want to propagate subscription since scroll events are going to be issued by a child
+    propagationMask |= EV_SCROLL;
     if (horizontalScrollable) {
         horizontal = new Scrollbar(100, true);
         horizontal->attachToParent(this);
@@ -583,37 +685,21 @@ void ScrollbarManager::draw() {
 // TextWindow methods
 TextWindow::TextWindow() {
     content = nullptr;
-    viewX = 0;
-    viewY = 0;
 }
 
 void TextWindow::setText(const wchar_t* newContent) {
     content = newContent;
 }
 
-void TextWindow::setViewportPosition(int x, int y) {
-    viewX = x;
-    viewY = y;
-}
-
-void TextWindow::setViewportSpan(int x, int y) {
-    spanX = x;
-    spanY = y;
-}
-
 void TextWindow::draw() {
-    // printf("Drawing text \"%s\" at (%d, %d)\n", content, x, y);
-    // RenderEngine::InitOffScreen(width, height);
     RenderEngine::DrawText(x, y, content);
-    // RenderEngine::FlushOffScreen(x, y);
-    // RenderEngine::DrawRect(x, y, width, height, bkg, frg, thickness);
 }
 
 // Vector2:
-template<typename T>
+template <typename T>
 Vector2<T>::Vector2() : x(0), y(0) {}
 
-template<typename T>
+template <typename T>
 Vector2<T>::Vector2(const T& x, const T& y) : x(x), y(y) {}
 
 template struct Vector2<int>;

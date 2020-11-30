@@ -9,10 +9,11 @@ std::stack<sf::RenderTarget *> RenderEngine::targets;
 
 void RenderEngine::Init(unsigned int width, unsigned int height) {
     mainWindow.create(sf::VideoMode(width, height), "My window system", sf::Style::None);
-    if(!defaultFont.loadFromFile("default.ttf")) {
+    if (!defaultFont.loadFromFile("default.ttf")) {
         printf("Unable to load font\n");
         exit(-1);
     }
+
     targets.push(&mainWindow);
     pushGlobalOffset(0, 0);
 }
@@ -35,7 +36,7 @@ bool RenderEngine::Run() {
     return 0;
 }
 
-bool RenderEngine::PollEvent(Event& ev) {
+bool RenderEngine::PollEvent(Event &ev) {
     sf::Event sfmlEv;
     while (mainWindow.pollEvent(sfmlEv)) {
         if (TranslateEvent(sfmlEv, ev))
@@ -61,7 +62,7 @@ Event::MOUSE_BUTTON RenderEngine::TranslateMouseButton(sf::Mouse::Button button)
     }
 }
 
-bool RenderEngine::TranslateEvent(sf::Event sfmlEv, Event& ev) {
+bool RenderEngine::TranslateEvent(sf::Event sfmlEv, Event &ev) {
     switch (sfmlEv.type) {
         case sf::Event::Closed:
             ev.eventType = EV_CLOSED;
@@ -116,7 +117,7 @@ void RenderEngine::DrawRect(int x, int y,
     targets.top()->draw(rect);
 }
 
-void RenderEngine::DrawText(int x, int y, const wchar_t* text) {
+void RenderEngine::DrawText(int x, int y, const wchar_t *text) {
     sf::Text txt(text, defaultFont);
     txt.setPosition(x - globalOffsets.top().x, y - globalOffsets.top().y);
     txt.setFillColor(sf::Color::White);
@@ -125,22 +126,10 @@ void RenderEngine::DrawText(int x, int y, const wchar_t* text) {
 }
 
 void RenderEngine::InitOffScreen(unsigned int width, unsigned int height) {
-    // printf("Initializing off-screen buffer of size(%u, %u)\n", width, height);
-    // offScreenTarget.create(width,  height);
-    // offScreenTarget.clear();
-
     sf::RenderTexture *offScreen = new sf::RenderTexture();
     offScreen->create(width, height);
     offScreen->clear();
     targets.push(offScreen);
-
-    // sf::VertexArray lines(sf::Triangles, 3);
-    // lines[0].position = sf::Vector2f(100, 0);
-    // lines[1].position = sf::Vector2f(200, 0);
-    // lines[2].position = sf::Vector2f(150, 100);
-    // offScreenTarget.draw(lines);
-
-    // currentTarget = &offScreenTarget;
 }
 
 void RenderEngine::FlushOffScreen(int x, int y) {
@@ -152,7 +141,7 @@ void RenderEngine::FlushOffScreen(int x, int y) {
     sf::Sprite offScreenTargetSprite(current->getTexture());
     offScreenTargetSprite.setPosition(x - globalOffsets.top().x, y - globalOffsets.top().y);
     targets.top()->draw(offScreenTargetSprite);
-
+    delete current;
     // currentTarget = &mainWindow;
 }
 

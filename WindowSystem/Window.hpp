@@ -23,10 +23,13 @@ class AbstractWindow {
     virtual void processEvent(Event ev);                  // Event processing. Just dummy function that calls handleEvent
     virtual void attachToParent(AbstractWindow *parent);  // Function that attaches this window to some other window
     void updateEventMask(uint64_t update);                // Function that updates event mask of the window as well as of its paternal node
+    void updatePropagationMask(uint64_t update);          // Function that updates mask of events that are propagated further yet are not used by the window itself
     virtual ~AbstractWindow();                            // Virtual destructor
+    virtual void dump(FILE *f);
 
    protected:
     uint64_t eventMask;                  // Mask for filtering out unnecessary events
+    uint64_t propagationMask;            // Mask for filtering events that should be propag
     AbstractWindow *parent;              // Parent window
     virtual void handleEvent(Event ev);  // Handle certain (function that should be overloaded in order to implement event handling)
 };
@@ -39,6 +42,7 @@ class ContainerWindow : public AbstractWindow {
     virtual void draw() override;
     void attachChild(AbstractWindow *win);
     virtual ~ContainerWindow();
+    virtual void dump(FILE *f) override;
 
    protected:
     std::list<AbstractWindow *> children;
@@ -69,7 +73,8 @@ class Rectangle {
 // Container window that can be represented as a rectangle
 class RectangleWindow : public ContainerWindow, public Rectangle {
    public:
-    virtual void draw();  // Function that draws the rectangle window
+    virtual void draw() override;  // Function that draws the rectangle window
+    virtual void dump(FILE *f) override;
 };
 
 class AbstractButton : public AbstractWindow {
@@ -85,15 +90,13 @@ class AbstractButton : public AbstractWindow {
     void setPressColor(const Color &color);             // Set button press color
     void setBackgroundColor(const Color &color);        // Set color for chillin' button
 
-    virtual void attachToParent(AbstractWindow *parent) override;  // Function that attaches this window to some other window
+    // virtual void attachToParent(AbstractWindow *parent) override;  // Function that attaches this window to some other window
     //  virtual bool isInside(int x, int y) ;                           // Function that checks intersection of a pixel with a button
     virtual bool isInside(int x, int y) = 0;
+    virtual void dump(FILE *f) override;
 
    protected:
     virtual void handleEvent(Event ev) override;  // New event handler
-                                                  //  Color hoverBkg;                               // Color of the button when it is being hovered over
-                                                  //  Color pressBkg;                               // Color of the button when it is being pressed on
-                                                  //  Color defaultBkg;                             // Color of button when it's chillin'
 
     bool hovered;  // Button is currently hovered over
     bool pressed;  // Button is currently being pressed down
@@ -113,6 +116,7 @@ class RectangleButton : public AbstractButton, public Rectangle {
     virtual void onButtonRelease(const Event &ev) override;  // Mouse button release
     virtual bool isInside(int x, int y) override;
     virtual void draw() override;
+    virtual void dump(FILE *f) override;
 
    protected:
     Color hoverBkg;
@@ -131,6 +135,7 @@ class Slider : public RectangleButton {
     virtual void onButtonPress(const Event &ev) override;    // Button pressdown payload
     virtual void onMouseMove(const Event &ev) override;      // Arbitrary mouse move event
     virtual void onButtonRelease(const Event &ev) override;  // Mouse button release
+    virtual void dump(FILE *f) override;
 
    private:
     virtual void handleEvent(Event ev) override;  // handleEvent should be overriden in order to allow for proper movement
@@ -146,6 +151,7 @@ class Slider : public RectangleButton {
 class ScrollbarButton : public RectangleButton {
    public:
     ScrollbarButton(bool isUp);
+    virtual void dump(FILE *f) override;
 
    private:
     virtual void click(const Event &ev) override;
@@ -155,6 +161,7 @@ class ScrollbarButton : public RectangleButton {
 class ScrollbarBackground : public RectangleWindow {
    public:
     ScrollbarBackground(bool isHorizontal);
+    virtual void dump(FILE *f) override;
 
    private:
     virtual void handleEvent(Event ev) override;
@@ -175,6 +182,7 @@ class Scrollbar : public ContainerWindow {
     int getSliderPositionAlongAxis();
     void setLength(int length);
     int getBkgLength();
+    virtual void dump(FILE *f) override;
 
    private:
     virtual void handleEvent(Event ev) override;
@@ -196,16 +204,11 @@ class TextWindow : public RectangleWindow {
    public:
     TextWindow();
     void setText(const wchar_t *newContent);
-    void setViewportPosition(int x, int y);
-    void setViewportSpan(int spanX, int spanY);
     virtual void draw() override;
+    virtual void dump(FILE *f) override;
 
    private:
     // virtual void handleEvent(Event ev) override;
-    int viewX;
-    int viewY;
-    int spanX;
-    int spanY;
     const wchar_t *content;
 };
 
@@ -218,6 +221,7 @@ class ScrollbarManager : public ContainerWindow {
     Scrollbar *horizontal;
     Scrollbar *vertical;
     virtual void processEvent(Event ev) override;  // Event redirector
+    virtual void dump(FILE *f) override;
 
    private:
     int adjWidth;
@@ -231,6 +235,7 @@ class Viewport : public ContainerWindow {
     void setSpan(const Vector2<int> &span);
     void setSize(const Vector2<int> &size);
     virtual void draw() override;
+    virtual void dump(FILE *f) override;
 
    protected:
     virtual void handleEvent(Event ev) override;
