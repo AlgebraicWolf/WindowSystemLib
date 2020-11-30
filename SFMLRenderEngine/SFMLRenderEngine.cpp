@@ -3,10 +3,9 @@
 #include "RenderEngine.hpp"
 
 sf::RenderWindow RenderEngine::mainWindow;
-sf::RenderTarget* RenderEngine::currentTarget;
-sf::RenderTexture RenderEngine::offScreenTarget;
 sf::Font RenderEngine::defaultFont;
 std::stack<sf::Vector2i> RenderEngine::globalOffsets;
+std::stack<sf::RenderTarget *> RenderEngine::targets;
 
 void RenderEngine::Init(unsigned int width, unsigned int height) {
     mainWindow.create(sf::VideoMode(width, height), "My window system", sf::Style::None);
@@ -14,7 +13,7 @@ void RenderEngine::Init(unsigned int width, unsigned int height) {
         printf("Unable to load font\n");
         exit(-1);
     }
-    currentTarget = &mainWindow;
+    targets.push(&mainWindow);
     pushGlobalOffset(0, 0);
 }
 
@@ -114,7 +113,7 @@ void RenderEngine::DrawRect(int x, int y,
     rect.setFillColor(sf::Color(bkgColor.red, bkgColor.green, bkgColor.blue, bkgColor.alpha));
     rect.setOutlineColor(sf::Color(frgColor.red, frgColor.green, frgColor.blue, frgColor.alpha));
     rect.setOutlineThickness(thickness);
-    mainWindow.draw(rect);
+    targets.top()->draw(rect);
 }
 
 void RenderEngine::DrawText(int x, int y, const wchar_t* text) {
@@ -122,13 +121,18 @@ void RenderEngine::DrawText(int x, int y, const wchar_t* text) {
     txt.setPosition(x - globalOffsets.top().x, y - globalOffsets.top().y);
     txt.setFillColor(sf::Color::White);
     txt.setFont(defaultFont);
-    currentTarget->draw(txt);
+    targets.top()->draw(txt);
 }
 
 void RenderEngine::InitOffScreen(unsigned int width, unsigned int height) {
     // printf("Initializing off-screen buffer of size(%u, %u)\n", width, height);
-    offScreenTarget.create(width,  height);
-    offScreenTarget.clear();
+    // offScreenTarget.create(width,  height);
+    // offScreenTarget.clear();
+
+    sf::RenderTexture *offScreen = new sf::RenderTexture();
+    offScreen->create(width, height);
+    offScreen->clear();
+    targets.push(offScreen);
 
     // sf::VertexArray lines(sf::Triangles, 3);
     // lines[0].position = sf::Vector2f(100, 0);
@@ -136,17 +140,20 @@ void RenderEngine::InitOffScreen(unsigned int width, unsigned int height) {
     // lines[2].position = sf::Vector2f(150, 100);
     // offScreenTarget.draw(lines);
 
-    currentTarget = &offScreenTarget;
+    // currentTarget = &offScreenTarget;
 }
 
 void RenderEngine::FlushOffScreen(int x, int y) {
-    offScreenTarget.display();
+    // offScreenTarget.display();
+    sf::RenderTexture *current = static_cast<sf::RenderTexture *>(targets.top());
+    targets.pop();
+    current->display();
     // printf("Flushin off-screen buffer at coordinates (%d, %d)\n", x, y);
-    sf::Sprite offScreenTargetSprite(offScreenTarget.getTexture());
+    sf::Sprite offScreenTargetSprite(current->getTexture());
     offScreenTargetSprite.setPosition(x - globalOffsets.top().x, y - globalOffsets.top().y);
-    mainWindow.draw(offScreenTargetSprite);
+    targets.top()->draw(offScreenTargetSprite);
 
-    currentTarget = &mainWindow;
+    // currentTarget = &mainWindow;
 }
 
 void RenderEngine::popGlobalOffset() {

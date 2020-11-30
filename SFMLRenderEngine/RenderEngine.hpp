@@ -29,10 +29,9 @@ class RenderEngine {
    private:
     static bool TranslateEvent(sf::Event sfmlEv, Event& ev);                    // Translate SFML event into own event type
     static Event::MOUSE_BUTTON TranslateMouseButton(sf::Mouse::Button button);  // Translate SFML mouse key identifier to own event system
-    static std::stack<sf::Vector2i> globalOffsets;                                           // Global drawing offset
-    static sf::RenderTarget* currentTarget;                                     // Current render target (for off-screen rendering)
+    static std::stack<sf::Vector2i> globalOffsets;                              // Global drawing offset
+    static std::stack<sf::RenderTarget*> targets;                               // Stack of off-screen targets for nested viewports and such
     static sf::RenderWindow mainWindow;                                         // System window for displaying anything
-    static sf::RenderTexture offScreenTarget;                                   // Texture for off-screen rendering
     static sf::Font defaultFont;                                                // Default text font
     RenderEngine();                                                             // Private constructor ensures that class is a singletone indeed
 };
