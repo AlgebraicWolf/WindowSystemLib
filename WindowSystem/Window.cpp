@@ -5,9 +5,6 @@
 // TODO: Should probably split this into even more files, as it becomes increasingly difficult to navigate and maintain
 
 // AbstractWindow methods
-
-
-
 constexpr unsigned int scrollbarElemSize = 25;
 
 void AbstractWindow::draw() {
@@ -635,20 +632,20 @@ void Viewport::setSize(const Vector2<int>& size) {
 }
 
 void Viewport::handleEvent(Event ev) {
-    // if (ev.eventType == EV_SCROLL) {
-    //     if (ev.scroll.isHorizontal) {
-    //         viewX = ev.scroll.position * spanX;
-    //     } else {
-    //         viewY = ev.scroll.position * spanY;
-    //     }
-    // }
+    if (ev.eventType == EV_SCROLL) {
+        if (ev.scroll.isHorizontal) {
+            viewPosition.x = ev.scroll.position * span.x;
+        } else {
+            viewPosition.y = ev.scroll.position * span.y;
+        }
+    }
 }
 
 void Viewport::draw() {
     RenderEngine::InitOffScreen(size.x, size.y);
-
+    RenderEngine::pushGlobalOffset(viewPosition.x, viewPosition.y);
     ContainerWindow::draw();
-
+    RenderEngine::popGlobalOffset();
     RenderEngine::FlushOffScreen(position.x, position.y);
 }
 

@@ -6,6 +6,7 @@ sf::RenderWindow RenderEngine::mainWindow;
 sf::RenderTarget* RenderEngine::currentTarget;
 sf::RenderTexture RenderEngine::offScreenTarget;
 sf::Font RenderEngine::defaultFont;
+std::stack<sf::Vector2i> RenderEngine::globalOffsets;
 
 void RenderEngine::Init(unsigned int width, unsigned int height) {
     mainWindow.create(sf::VideoMode(width, height), "My window system", sf::Style::None);
@@ -14,6 +15,7 @@ void RenderEngine::Init(unsigned int width, unsigned int height) {
         exit(-1);
     }
     currentTarget = &mainWindow;
+    pushGlobalOffset(0, 0);
 }
 
 void RenderEngine::Finalize() {
@@ -108,7 +110,7 @@ void RenderEngine::DrawRect(int x, int y,
                             unsigned int width, unsigned int height,
                             Color bkgColor, Color frgColor, float thickness) {
     sf::RectangleShape rect(sf::Vector2f(width, height));
-    rect.setPosition(sf::Vector2f(x, y));
+    rect.setPosition(x - globalOffsets.top().x, y - globalOffsets.top().y);
     rect.setFillColor(sf::Color(bkgColor.red, bkgColor.green, bkgColor.blue, bkgColor.alpha));
     rect.setOutlineColor(sf::Color(frgColor.red, frgColor.green, frgColor.blue, frgColor.alpha));
     rect.setOutlineThickness(thickness);
@@ -117,7 +119,7 @@ void RenderEngine::DrawRect(int x, int y,
 
 void RenderEngine::DrawText(int x, int y, const wchar_t* text) {
     sf::Text txt(text, defaultFont);
-    txt.setPosition(x, y);
+    txt.setPosition(x - globalOffsets.top().x, y - globalOffsets.top().y);
     txt.setFillColor(sf::Color::White);
     txt.setFont(defaultFont);
     currentTarget->draw(txt);
@@ -141,8 +143,16 @@ void RenderEngine::FlushOffScreen(int x, int y) {
     offScreenTarget.display();
     // printf("Flushin off-screen buffer at coordinates (%d, %d)\n", x, y);
     sf::Sprite offScreenTargetSprite(offScreenTarget.getTexture());
-    offScreenTargetSprite.setPosition(x, y);
+    offScreenTargetSprite.setPosition(x - globalOffsets.top().x, y - globalOffsets.top().y);
     mainWindow.draw(offScreenTargetSprite);
 
     currentTarget = &mainWindow;
+}
+
+void RenderEngine::popGlobalOffset() {
+    globalOffsets.pop();
+}
+
+void RenderEngine::pushGlobalOffset(int x, int y) {
+    globalOffsets.emplace(x, y);
 }
