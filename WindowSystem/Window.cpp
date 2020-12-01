@@ -4,7 +4,7 @@
 #include <cstdlib>
 
 const char* uint64_to_bin(uint64_t val) {
-    char *bin = new char[64];
+    char* bin = new char[65]();
     for (uint64_t i = 0; i < 64; i++) {
         bin[63 - i] = (val & (uint64_t(1) << i)) ? '1' : '0';
     }
@@ -323,7 +323,6 @@ void Slider::setPosition(int x, int y) {
 
 Slider::Slider(bool isHorizontal) : isHorizontal(isHorizontal) {
     eventMask |= EV_SCROLL;  // Don't want to propagate subscription
-    propagationMask |= EV_SCROLL;
 }
 
 void Slider::setLimit(int limit) {
@@ -458,7 +457,6 @@ Scrollbar::Scrollbar(int length, bool isHorizontal) : isHorizontal(isHorizontal)
     bkg->setThickness(-1);
 
     eventMask |= EV_SCROLL;  // Don't really want to propagate subscription to scroll event
-    propagationMask |= EV_SCROLL;
 }
 
 void Scrollbar::handleEvent(Event ev) {
@@ -628,7 +626,7 @@ ScrollbarManager::ScrollbarManager(bool horizontalScrollable, bool verticalScrol
 
 void ScrollbarManager::processEvent(Event ev) {
     fprintf(stderr, "Issuing event of type %lu\n", ev.eventType);
-    if (ev.eventType != EV_SCROLL) {
+    if (ev.eventType != EV_SCROLL && ev.eventType & propagationMask) {
         if (horizontal) {
             horizontal->processEvent(ev);
         }
@@ -638,8 +636,10 @@ void ScrollbarManager::processEvent(Event ev) {
         }
     }
 
-    for (auto child : children) {
-        child->processEvent(ev);
+    if (ev.eventType & propagationMask) {
+        for (auto child : children) {
+            child->processEvent(ev);
+        }
     }
 }
 
