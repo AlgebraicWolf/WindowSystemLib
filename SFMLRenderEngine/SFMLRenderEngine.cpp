@@ -152,3 +152,12 @@ void RenderEngine::popGlobalOffset() {
 void RenderEngine::pushGlobalOffset(int x, int y) {
     globalOffsets.emplace(x, y);
 }
+
+void RenderEngine::DrawBitmap(int x, int y, uint32_t width, uint32_t height, uint32_t* data) {
+    sf::Texture texture;
+    texture.create(width, height);
+    texture.update(reinterpret_cast<uint8_t *>(data));
+    sf::Sprite bitmap_sprite(texture);
+    bitmap_sprite.setPosition(x, y);
+    mainWindow.draw(bitmap_sprite);
+}

@@ -10,8 +10,11 @@ SFMLRenderEngine.o: SFMLRenderEngine/SFMLRenderEngine.cpp SFMLRenderEngine/Rende
 app.o: main.cpp Application.hpp
 	clang++ $(CFLAGS) -c -o app.o main.cpp
 
-build_sfml: app.o SFMLRenderEngine.o Window.o 
-	clang++ $(CFLAGS) $(SFMLLIB) -o main app.o SFMLRenderEngine.o Window.o
+GraphicEditor.o: GraphicEditor/GraphicEditor.hpp GraphicEditor/GraphicEditor.cpp
+	clang++ $(CFLAGS) -c -o GraphicEditor.o GraphicEditor/GraphicEditor.cpp
+
+build_sfml: app.o SFMLRenderEngine.o Window.o GraphicEditor.o
+	clang++ $(CFLAGS) $(SFMLLIB) -o main app.o SFMLRenderEngine.o Window.o GraphicEditor.o
 
 clean:
 	rm -rf *.o main

@@ -16,12 +16,13 @@ class RenderEngine {
     static bool PollEvent(Event& ev);                           // Event polling
     static void DrawRect(int x, int y,
                          unsigned int width, unsigned int height,
-                         Color bkgColor, Color frgColor, float thickness);  // Draw rectangle
-    static void DrawText(int x, int y, const wchar_t* text);                // Draw text
-    static void InitOffScreen(unsigned int width, unsigned int height);     // Initialize new target for off-screen rendering
-    static void FlushOffScreen(int x, int y);                               // Render off-screen buffer at a certain position
-    static void pushGlobalOffset(int x, int y);                             // Push offset settings on the stack
-    static void popGlobalOffset();                                          // Pop offset settings
+                         Color bkgColor, Color frgColor, float thickness);                  // Draw rectangle
+    static void DrawText(int x, int y, const wchar_t* text);                                // Draw text
+    static void InitOffScreen(unsigned int width, unsigned int height);                     // Initialize new target for off-screen rendering
+    static void FlushOffScreen(int x, int y);                                               // Render off-screen buffer at a certain position
+    static void DrawBitmap(int x, int y, uint32_t width, uint32_t height, uint32_t* data);  // Draw array of pixels
+    static void pushGlobalOffset(int x, int y);                                             // Push offset settings on the stack
+    static void popGlobalOffset();                                                          // Pop offset settings
 
     // static void RenderToMain(); // Set current target to mainWindow
     // static void SetRenderTarget(RenderTarget* target); // Set current render target
