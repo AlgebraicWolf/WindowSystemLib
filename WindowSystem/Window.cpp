@@ -245,12 +245,12 @@ bool Rectangle::isInsideRect(int x, int y) {
     int ystart = this->y;
     int yend = this->y + this->height;
 
-    if (thickness > 0) {
-        xstart -= thickness;
-        ystart -= thickness;
-        xend += thickness;
-        yend += thickness;
-    }
+    // if (thickness > 0) {
+    //     xstart -= thickness;
+    //     ystart -= thickness;
+    //     xend += thickness;
+    //     yend += thickness;
+    // }
 
     return (xstart <= x) && (ystart <= y) && (xend >= x) && (yend >= y);
 }
@@ -270,6 +270,7 @@ void RectangleButton::draw() {
 
 void RectangleWindow::draw() {
     RenderEngine::DrawRect(x, y, width, height, bkg, frg, thickness);
+    ContainerWindow::draw();
 }
 
 void RectangleButton::setHoverColor(const Color& color) {
@@ -419,7 +420,7 @@ void Slider::handleEvent(Event ev) {
 
     Scrollbar* sParent = dynamic_cast<Scrollbar*>(parent);
     sParent->handleEvent(scrollEv);
-    fprintf(stderr, "%p %p\n", static_cast<void*>(this), static_cast<void*>(sParent));
+    // fprintf(stderr, "%p %p\n", static_cast<void*>(this), static_cast<void*>(sParent));
 }
 
 int Slider::getPositionAlongAxis() {

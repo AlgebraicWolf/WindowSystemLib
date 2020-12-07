@@ -2,7 +2,7 @@
 #include "GraphicEditor/GraphicEditor.hpp"
 
 int main() {
-    Application::Init();
+    Application::Init(1600, 900);
 
     // Color defBkg = {0, 0, 0, 0};
     // Color hoverBkg = {100, 100, 100, 255};
@@ -45,10 +45,12 @@ int main() {
 
     // Application::DumpHierarchy("dump.dot");
 
-    Canvas *c = new Canvas(700, 500);
-    c->setPosition(50, 50);
-    c->setThickness(0);
-    Application::Attach(c);
+    // Canvas *c = new Canvas(700, 500);
+    // c->setPosition(50, 50);
+    // c->setThickness(0);
+    DrawingManager *dm = new DrawingManager;
+    dm->createCanvas(1200, 700);
+    Application::Attach(dm);
 
     while (Application::Run()) {}
 

@@ -9,7 +9,7 @@
 // Singletone application class
 class Application {
    public:
-    static void Init();
+    static void Init(uint32_t width, uint32_t height);
     static void Finalize();
     static bool Run();
     static void Attach(AbstractWindow *win);
@@ -26,8 +26,8 @@ void Application::Attach(AbstractWindow *win) {
     rootWindow->attachChild(win);
 }
 
-void Application::Init() {
-    RenderEngine::Init(800, 600);
+void Application::Init(uint32_t width, uint32_t height) {
+    RenderEngine::Init(width, height);
     rootWindow = new ContainerWindow();
 }
 
