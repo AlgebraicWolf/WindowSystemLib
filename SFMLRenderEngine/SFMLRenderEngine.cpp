@@ -117,11 +117,12 @@ void RenderEngine::DrawRect(int x, int y,
     targets.top()->draw(rect);
 }
 
-void RenderEngine::DrawText(int x, int y, const wchar_t *text) {
+void RenderEngine::DrawText(int x, int y, const wchar_t *text, int characterSize) {
     sf::Text txt(text, defaultFont);
     txt.setPosition(x - globalOffsets.top().x, y - globalOffsets.top().y);
     txt.setFillColor(sf::Color::White);
     txt.setFont(defaultFont);
+    txt.setCharacterSize(characterSize);
     targets.top()->draw(txt);
 }
 
@@ -151,6 +152,10 @@ void RenderEngine::popGlobalOffset() {
 
 void RenderEngine::pushGlobalOffset(int x, int y) {
     globalOffsets.emplace(x, y);
+}
+
+void RenderEngine::pushRelGlobalOffset(int x, int y) {
+    globalOffsets.emplace(globalOffsets.top().x + x, globalOffsets.top().y + y);
 }
 
 void RenderEngine::DrawBitmap(int x, int y, uint32_t width, uint32_t height, uint32_t* data) {

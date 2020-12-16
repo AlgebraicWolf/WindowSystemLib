@@ -5,6 +5,8 @@
 #include "../Event.hpp"
 #include "../SFMLRenderEngine/RenderEngine.hpp"
 
+// TODO Buttons with icons
+
 // Vector class for coordinate-like shit
 // TODO Rewrite all things like (x, y), (width, height), etc. using this wonderful class
 template <typename T>
@@ -26,6 +28,7 @@ class AbstractWindow {
     void updatePropagationMask(uint64_t update);          // Function that updates mask of events that are propagated further yet are not used by the window itself
     virtual ~AbstractWindow();                            // Virtual destructor
     virtual void dump(FILE *f);
+    void detach(); // Detach from parent
 
    protected:
     uint64_t eventMask;                  // Mask for filtering out unnecessary events
@@ -43,6 +46,7 @@ class ContainerWindow : public AbstractWindow {
     void attachChild(AbstractWindow *win);
     virtual ~ContainerWindow();
     virtual void dump(FILE *f) override;
+    void detachChild(AbstractWindow *child);
 
    protected:
     std::list<AbstractWindow *> children;
@@ -204,12 +208,14 @@ class TextWindow : public RectangleWindow {
    public:
     TextWindow();
     void setText(const wchar_t *newContent);
+    void setCharSize(int size);
     virtual void draw() override;
     virtual void dump(FILE *f) override;
 
    private:
     // virtual void handleEvent(Event ev) override;
     const wchar_t *content;
+    int characterSize;
 };
 
 class ScrollbarManager : public ContainerWindow {

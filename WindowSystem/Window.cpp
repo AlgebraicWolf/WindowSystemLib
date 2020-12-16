@@ -142,6 +142,13 @@ void AbstractWindow::handleEvent(Event ev) {
     printf("Event type: %lx\nEvent type mask: %lx\n\n", ev.eventType, eventMask);
 }
 
+void AbstractWindow::detach() {
+    if(!parent) return;
+
+    static_cast<ContainerWindow *>(parent)->detachChild(this);
+    parent = nullptr;
+}
+
 // ContainerWindow methods
 
 ContainerWindow::~ContainerWindow() {
@@ -170,6 +177,10 @@ void ContainerWindow::processEvent(Event ev) {
 void ContainerWindow::attachChild(AbstractWindow* win) {
     children.push_back(win);
     win->attachToParent(this);
+}
+
+void ContainerWindow::detachChild(AbstractWindow *child) {
+    children.remove(child);
 }
 
 // AbstractButton methods
@@ -415,11 +426,11 @@ void Slider::handleEvent(Event ev) {
         bkg = defaultBkg;
     }
 
-    Event scrollEv;
-    scrollEv.eventType = EV_SCROLL;
+    // Event scrollEv;
+    // scrollEv.eventType = EV_SCROLL;
 
-    Scrollbar* sParent = dynamic_cast<Scrollbar*>(parent);
-    sParent->handleEvent(scrollEv);
+    // Scrollbar* sParent = dynamic_cast<Scrollbar*>(parent);
+    // sParent->handleEvent(scrollEv);
     // fprintf(stderr, "%p %p\n", static_cast<void*>(this), static_cast<void*>(sParent));
 }
 
@@ -684,8 +695,12 @@ void ScrollbarManager::draw() {
 }
 
 // TextWindow methods
-TextWindow::TextWindow() {
+TextWindow::TextWindow() : characterSize(30) {
     content = nullptr;
+}
+
+void TextWindow::setCharSize(int size) {
+    characterSize = size;
 }
 
 void TextWindow::setText(const wchar_t* newContent) {
@@ -693,7 +708,7 @@ void TextWindow::setText(const wchar_t* newContent) {
 }
 
 void TextWindow::draw() {
-    RenderEngine::DrawText(x, y, content);
+    RenderEngine::DrawText(x, y, content, characterSize);
 }
 
 // Vector2:
