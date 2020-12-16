@@ -1,12 +1,16 @@
 #include "GraphicEditor.hpp"
 
+#include <dlfcn.h>
 #include <inttypes.h>
 
 #include <concepts>
 #include <cstring>
+#include <filesystem>
 
 #include "../ColorConverter.hpp"
 #include "../SFMLRenderEngine/RenderEngine.hpp"
+
+constexpr int32_t MAX_THICKNESS = 100;
 
 Color from_hex(uint32_t clr) {
     Color c;
@@ -86,6 +90,8 @@ DrawingManager::DrawingManager() {
     colorPicker->setPosition(1340, 625);
 
     canvas = nullptr;
+
+    loadPlugins("editor_plugin_api/plugins/");
 }
 
 void DrawingManager::createCanvas(uint32_t width, uint32_t height) {
@@ -120,6 +126,139 @@ void DrawingManager::setCurrentSettingsCollection(SettingsCollection *collection
     fprintf(stderr, "Currect settings collection is %p\n", static_cast<void *>(settingsContainer));
 
     settingsContainer->setCurrentCollection(collection);
+}
+
+void DrawingManager::loadPlugins(const char *plugins_dir) {
+    for (auto &entry : std::filesystem::directory_iterator(plugins_dir)) {
+        fprintf(stderr, "Detected plugin directory %s\n", entry.path().c_str());
+
+        auto plugin_executable = entry.path() / entry.path().filename();
+        plugin_executable += ".so";
+
+        auto icon_path = entry.path() / "icon.png";
+
+        fprintf(stderr, "Executable path is %s and icon path is %s\n", plugin_executable.c_str(),
+                icon_path.c_str());
+        fprintf(stderr, "Trying to load plugin\n");
+
+        void *handle = dlopen(plugin_executable.c_str(), RTLD_LAZY);
+        if (nullptr == handle) {
+            fprintf(stderr, "An error occurred while opening .so file\n");
+            break;
+        }
+
+        PluginAPI::Plugin *(*get_plugin)() =
+            reinterpret_cast<PluginAPI::Plugin *(*)()>(dlsym(handle, "get_plugin"));
+
+        if (nullptr == get_plugin) {
+            fprintf(stderr, "An error occurred while loading get_plugin function");
+            break;
+        }
+
+        PluginAPI::Plugin *plugin_instance = get_plugin();
+        if (nullptr == plugin_instance) {
+            fprintf(stderr,
+                    "An error occurred while getting instance of PluginAPI::Plugin object\n");
+            break;
+        }
+
+        PluginTool *tool = new PluginTool(handle, plugin_instance);
+
+        toolManager->attachTool(tool);
+    }
+}
+
+PluginTool::PluginTool(void *handle, PluginAPI::Plugin *plugin) : handle(handle), plugin(plugin) {
+    plugin->init();
+
+    mySettings = new SettingsCollection;
+    for (auto &property : plugin->properties) {
+        if (property.first != PluginAPI::TYPE::PRIMARY_COLOR &&
+            property.first != PluginAPI::TYPE::SECONDARY_COLOR &&
+            property.first != PluginAPI::TYPE::THICKNESS) {
+            wchar_t *wchar_label = nullptr;
+            if (property.second.label) {
+                wchar_label =
+                    static_cast<wchar_t *>(calloc(strlen(property.second.label), sizeof(wchar_t)));
+                mbstowcs(wchar_label, property.second.label, strlen(property.second.label));
+            } else {
+                wchar_label = const_cast<wchar_t *>(L"");
+            }
+            switch (property.second.display_type) {
+                case PluginAPI::Property::DISPLAY_TYPE::SLIDER:
+                    mySettings->addSetting(property.first, new SliderSetting(wchar_label));
+                    break;
+
+                case PluginAPI::Property::DISPLAY_TYPE::CHECKBOX:
+                    mySettings->addSetting(property.first, new CheckboxSetting(wchar_label));
+                    break;
+
+                default:
+                    fprintf(stderr,
+                            "The required property has non-implemented selector %d, so this "
+                            "whole abomination is likely to crush\n",
+                            property.second.display_type);
+                    break;
+            }
+        }
+    }
+
+    if (plugin->properties.contains(PluginAPI::TYPE::THICKNESS)) {
+        mySettings->addSetting(PluginAPI::TYPE::THICKNESS, new SliderSetting(L"Thickness"));
+    }
+}
+
+PluginTool::~PluginTool() {
+    plugin->deinit();
+    dlclose(handle);
+}
+
+void PluginTool::startApplication(Canvas &canvas, uint32_t x, uint32_t y, uint32_t frgColor,
+                                  uint32_t bkgColor,
+                                  std::unordered_map<SettingKey, Setting> settings) {
+    PluginAPI::Position pos = {x, y};
+    PluginAPI::Canvas api_canvas = {reinterpret_cast<uint8_t *>(canvas.getData()),
+                                    canvas.getHeight(), canvas.getWidth()};
+
+    for(auto& property : plugin->properties) {
+        switch(property.second.display_type) {
+            case PluginAPI::Property::DISPLAY_TYPE::SLIDER:
+                property.second.double_value = settings[property.first].slider_pos;
+            break;
+
+            case PluginAPI::Property::DISPLAY_TYPE::CHECKBOX:
+                property.second.int_value = settings[property.first].checkbox;
+            break;
+            
+            default:
+            break;
+        }
+    }
+
+    if(plugin->properties.contains(PluginAPI::TYPE::THICKNESS))
+        plugin->properties[PluginAPI::TYPE::THICKNESS].int_value = MAX_THICKNESS * plugin->properties[PluginAPI::TYPE::THICKNESS].double_value;
+
+    if(plugin->properties.contains(PluginAPI::TYPE::PRIMARY_COLOR))
+        plugin->properties[PluginAPI::TYPE::PRIMARY_COLOR].int_value = frgColor;
+
+    if(plugin->properties.contains(PluginAPI::TYPE::SECONDARY_COLOR))
+        plugin->properties[PluginAPI::TYPE::PRIMARY_COLOR].int_value = bkgColor;
+
+    plugin->start_apply(api_canvas, pos);
+}
+
+void PluginTool::endApplication(Canvas &canvas, uint32_t x, uint32_t y) {
+    PluginAPI::Position pos = {x, y};
+    PluginAPI::Canvas api_canvas = {reinterpret_cast<uint8_t *>(canvas.getData()),
+                                    canvas.getHeight(), canvas.getWidth()};
+    plugin->apply(api_canvas, pos);
+}
+
+void PluginTool::apply(Canvas &canvas, uint32_t x, uint32_t y) {
+    PluginAPI::Position pos = {x, y};
+    PluginAPI::Canvas api_canvas = {reinterpret_cast<uint8_t *>(canvas.getData()),
+                                    canvas.getHeight(), canvas.getWidth()};
+    plugin->stop_apply(api_canvas, pos);
 }
 
 ToolManager *DrawingManager::getToolManager() { return toolManager; }
@@ -473,6 +612,8 @@ std::unordered_map<SettingKey, Setting> SettingsContainer::getSettings() {
     return current->getCurrentSettings();
 }
 
+SettingsCollection::SettingsCollection() : accumulatedHeight(0) {}
+
 void SettingsContainer::draw() {
     if (current) current->setPosition(x, y);
     RectangleWindow::draw();
@@ -485,6 +626,8 @@ void SettingsCollection::draw() {
 }
 
 void SettingsCollection::addSetting(SettingKey key, SettingElement *elem) {
+    elem->setPosition(0, accumulatedHeight);
+    accumulatedHeight += elem->getHeight();
     attachChild(elem);
 
     elems[key] = elem;
@@ -518,6 +661,74 @@ applyTransformation(std::unordered_map<KeyType, ValueType> container, Func f) {
 std::unordered_map<SettingKey, Setting> SettingsCollection::getCurrentSettings() {
     return applyTransformation<SettingKey, SettingElement *, Setting>(
         elems, [](SettingElement *el) -> Setting { return el->getSettingValue(); });
+}
+
+Checkbox::Checkbox() : value(false) {
+    setSize(30, 30);
+    setThickness(-2);
+    setHoverColor({255, 255, 255, 100});
+    setBackgroundColor({0, 0, 0, 0});
+    setOutlineColor({255, 255, 255, 255});
+    setPressColor({255, 255, 255, 255});
+}
+
+void Checkbox::click(const Event &) {
+    value = !value;
+
+    if (value) {
+        setBackgroundColor({255, 255, 255, 200});
+    } else {
+        setBackgroundColor({0, 0, 0, 0});
+    }
+}
+
+bool Checkbox::getValue() { return value; }
+
+void SettingElement::processEvent(Event ev) {
+    if (ev.eventType == EV_MOUSE_KEY_PRESS || ev.eventType == EV_MOUSE_KEY_RELEASE ||
+        ev.eventType == EV_MOUSE_MOVE) {
+        ev.mouse.x -= x;
+        ev.mouse.y -= y;
+    }
+
+    RectangleWindow::processEvent(ev);
+}
+
+CheckboxSetting::CheckboxSetting(const wchar_t *label) : label(label) {
+    TextWindow *labelWindow = new TextWindow;
+    labelWindow->setText(label);
+    labelWindow->setPosition(8, 3);
+    labelWindow->setCharSize(25);
+
+    checkbox = new Checkbox;
+    checkbox->setPosition(220, 3);
+
+    setOutlineColor({255, 255, 255, 255});
+    setPosition(0, 0);
+    setBackgroundColor({0, 0, 0, 0});
+    setThickness(-1);
+    setSize(260, 35);
+
+    fprintf(stderr, "Created checkbox with the label %ls\n", this->label);
+
+    attachChild(checkbox);
+    attachChild(labelWindow);
+}
+
+int CheckboxSetting::getHeight() { return height; }
+
+Setting CheckboxSetting::getSettingValue() {
+    Setting result;
+    result.checkbox = checkbox->getValue();
+    return result;
+}
+
+void CheckboxSetting::draw() {
+    RenderEngine::pushRelGlobalOffset(-x, -y);
+    ContainerWindow::draw();
+    RenderEngine::popGlobalOffset();
+
+    RenderEngine::DrawRect(x, y, width, height, bkg, frg, thickness);
 }
 
 SliderSetting::SliderSetting(const wchar_t *label) : label(label) {

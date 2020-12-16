@@ -24,6 +24,8 @@ class RenderEngine {
                            uint32_t* data);      // Draw array of pixels
     static void pushGlobalOffset(int x, int y);  // Push offset settings on the stack
     static void pushRelGlobalOffset(int x, int y);
+    static int getGlobalXOffset();
+    static int getGlobalYOffset();
     static void popGlobalOffset();  // Pop offset settings
 
     // static void RenderToMain(); // Set current target to mainWindow

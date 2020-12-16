@@ -1,0 +1,3 @@
+[submodule "editor_plugin_api"]
+	path = editor_plugin_api
+	url = https://github.com/fckxorg/editor_plugin_api.git

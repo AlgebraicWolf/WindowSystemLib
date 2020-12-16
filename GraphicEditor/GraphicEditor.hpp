@@ -3,6 +3,7 @@
 #include <cstdint>
 
 #include "../WindowSystem/Window.hpp"
+#include "../editor_plugin_api/api/api.hpp"
 
 // Canvas is a renderable array array of pixels that supports drawing on it
 class Canvas : public RectangleWindow {
@@ -32,8 +33,19 @@ class SettingElement : public RectangleWindow {
    public:
     virtual Setting getSettingValue() = 0;
     virtual int getHeight() = 0;  // Height getter for the sake of settings fetching
+    virtual void processEvent(Event ev) override;
 
    private:
+};
+
+class Checkbox : public RectangleButton {
+   public:
+    Checkbox();
+    virtual void click(const Event &ev) override;
+    bool getValue();
+
+   private:
+    bool value;
 };
 
 class SliderSetting : public SettingElement {
@@ -43,11 +55,24 @@ class SliderSetting : public SettingElement {
     virtual Setting getSettingValue() override;
     virtual int getHeight() override;
     virtual void draw() override;
-    void adjustPosition(int x, int y);
+    //  void adjustPosition(int x, int y);
 
    private:
     const wchar_t *label;
     Slider *slider;
+};
+
+class CheckboxSetting : public SettingElement {
+   public:
+    CheckboxSetting(const wchar_t *label);
+
+    virtual Setting getSettingValue() override;
+    virtual int getHeight() override;
+    virtual void draw() override;
+
+   private:
+    const wchar_t *label;
+    Checkbox *checkbox;
 };
 
 using SettingKey = uint32_t;
@@ -55,12 +80,14 @@ using SettingKey = uint32_t;
 // Collection of settings
 class SettingsCollection : public RectangleWindow {
    public:
+    SettingsCollection();
     std::unordered_map<SettingKey, Setting> getCurrentSettings();
     void addSetting(SettingKey key, SettingElement *el);
     virtual void draw() override;
     virtual void processEvent(Event ev) override;
 
    private:
+    int accumulatedHeight;
     std::unordered_map<SettingKey, SettingElement *> elems;
     Setting getSettingElementValue(SettingElement *elem);
 };
@@ -84,7 +111,8 @@ class AbstractTool : public RectangleButton {
     virtual void click(const Event &ev) override;
 
     virtual void startApplication(Canvas &canvas, uint32_t x, uint32_t y, uint32_t frgColor,
-                                  uint32_t bkgColor, std::unordered_map<SettingKey, Setting> settings) = 0;
+                                  uint32_t bkgColor,
+                                  std::unordered_map<SettingKey, Setting> settings) = 0;
     virtual void endApplication(Canvas &canvas, uint32_t x, uint32_t y) = 0;
     virtual void apply(Canvas &canvas, uint32_t x, uint32_t y) = 0;
     void deactivate();
@@ -200,6 +228,7 @@ class DrawingManager : public ContainerWindow {
     // uint32_t bkgColor;
     // uint32_t frgColor;
 
+    void loadPlugins(const char *plugins_dir);
     ToolManager *toolManager;
     Canvas *canvas;
     ColorPicker *colorPicker;
@@ -207,11 +236,31 @@ class DrawingManager : public ContainerWindow {
 };
 
 // There go tools
+
+// PluginTool is a tool wrapper for plugin
+class PluginTool : public AbstractTool {
+   public:
+    PluginTool(void *handle, PluginAPI::Plugin *plugin);
+    ~PluginTool();
+
+    virtual void startApplication(Canvas &canvas, uint32_t x, uint32_t y, uint32_t frgColor,
+                                  uint32_t bkgColor,
+                                  std::unordered_map<SettingKey, Setting> settings) override;
+    virtual void endApplication(Canvas &canvas, uint32_t x, uint32_t y) override;
+    virtual void apply(Canvas &canvas, uint32_t x, uint32_t y) override;
+
+   private:
+    void *handle;
+    PluginAPI::Plugin *plugin;
+};
+
+// Brush tool class
 class Brush : public AbstractTool {
    public:
     Brush();
     virtual void startApplication(Canvas &canvas, uint32_t x, uint32_t y, uint32_t frgColor,
-                                  uint32_t bkgColor, std::unordered_map<SettingKey, Setting> settings) override;
+                                  uint32_t bkgColor,
+                                  std::unordered_map<SettingKey, Setting> settings) override;
     virtual void endApplication(Canvas &canvas, uint32_t x, uint32_t y) override;
     virtual void apply(Canvas &canvas, uint32_t x, uint32_t y) override;
     void setColor(uint32_t color);
@@ -223,10 +272,12 @@ class Brush : public AbstractTool {
     uint32_t radius;
 };
 
+// Eraser is a modification of brush that uses background color instead of foreground color
 class Eraser : public Brush {
    public:
     virtual void startApplication(Canvas &canvas, uint32_t x, uint32_t y, uint32_t frgColor,
-                                  uint32_t bkgColor, std::unordered_map<SettingKey, Setting> settings) override;
+                                  uint32_t bkgColor,
+                                  std::unordered_map<SettingKey, Setting> settings) override;
 };
 
 #endif  // GRAPHIC_EDITOR_HPP_

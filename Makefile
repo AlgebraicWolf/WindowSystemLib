@@ -14,7 +14,7 @@ GraphicEditor.o: GraphicEditor/GraphicEditor.hpp GraphicEditor/GraphicEditor.cpp
 	clang++ $(CFLAGS) -c -o GraphicEditor.o GraphicEditor/GraphicEditor.cpp
 
 build_sfml: app.o SFMLRenderEngine.o Window.o GraphicEditor.o
-	clang++ $(CFLAGS) $(SFMLLIB) -o main app.o SFMLRenderEngine.o Window.o GraphicEditor.o
+	clang++ $(CFLAGS) $(SFMLLIB) -ldl -o main app.o SFMLRenderEngine.o Window.o GraphicEditor.o
 
 clean:
 	rm -rf *.o main
