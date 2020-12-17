@@ -52,7 +52,7 @@ void Canvas::handleEvent(Event ev) {
     if (ev.eventType == EV_MOUSE_KEY_PRESS && isInsideRect(ev.mouse.x, ev.mouse.y)) {
         pressed = true;
         static_cast<DrawingManager *>(parent)->startToolApplication(relX, relY);
-    } else if (ev.eventType == EV_MOUSE_KEY_RELEASE) {
+    } else if (ev.eventType == EV_MOUSE_KEY_RELEASE && pressed) {
         pressed = false;
         static_cast<DrawingManager *>(parent)->endToolApplication(relX, relY);
     }
@@ -142,6 +142,7 @@ void DrawingManager::endToolApplication(uint32_t x, uint32_t y) {
 }
 
 void DrawingManager::applyTool(uint32_t x, uint32_t y) {
+    // fprintf(stderr, "Applying tool");
     toolManager->getActiveTool()->apply(*canvas, x, y);
 }
 
@@ -169,7 +170,7 @@ void DrawingManager::loadPlugins(const char *plugins_dir) {
                 icon_path.c_str());
         fprintf(stderr, "Trying to load plugin\n");
 
-        void *handle = dlopen(plugin_executable.c_str(), RTLD_LAZY);
+        void *handle = dlopen(plugin_executable.c_str(), RTLD_NOW);
         if (nullptr == handle) {
             fprintf(stderr, "An error occurred while opening .so file\n");
             break;
@@ -280,13 +281,15 @@ void PluginTool::startApplication(Canvas &canvas, uint32_t x, uint32_t y, uint32
 }
 
 void PluginTool::endApplication(Canvas &canvas, uint32_t x, uint32_t y) {
+    fprintf(stderr, "Ending plugin tool application\n");
     PluginAPI::Position pos = {x, y};
     PluginAPI::Canvas api_canvas = {reinterpret_cast<uint8_t *>(canvas.getData()),
                                     canvas.getHeight(), canvas.getWidth()};
-    plugin->apply(api_canvas, pos);
+    plugin->stop_apply(api_canvas, pos);
 }
 
 void PluginTool::apply(Canvas &canvas, uint32_t x, uint32_t y) {
+    // fprintf(stderr, "Applying plugin tool\n");
     PluginAPI::Position pos = {x, y};
     PluginAPI::Canvas api_canvas = {reinterpret_cast<uint8_t *>(canvas.getData()),
                                     canvas.getHeight(), canvas.getWidth()};
@@ -865,8 +868,8 @@ FinalSaveButton::FinalSaveButton() {
 
 void FinalSaveButton::click(const Event &) {
     RenderEngine::SaveToImage(static_cast<SaveDialog *>(parent)->getPath(),
-                                             current_canvas->getData(), current_canvas->getWidth(),
-                                             current_canvas->getHeight());
+                              current_canvas->getData(), current_canvas->getWidth(),
+                              current_canvas->getHeight());
     static_cast<SaveDialog *>(parent)->finish();
 }
 
@@ -882,11 +885,12 @@ FinalLoadButton::FinalLoadButton() {
     attachTexture(0);
 }
 
-void FinalLoadButton::click(const Event &) { 
-    auto [width, height, img] = RenderEngine::LoadFromImage(static_cast<LoadDialog *>(parent)->getPath());
+void FinalLoadButton::click(const Event &) {
+    auto [width, height, img] =
+        RenderEngine::LoadFromImage(static_cast<LoadDialog *>(parent)->getPath());
     current_canvas->emplace(width, height, img);
-    static_cast<SaveDialog *>(parent)->finish(); 
-    }
+    static_cast<SaveDialog *>(parent)->finish();
+}
 
 const wchar_t *SaveDialog::getPath() { return inp->getString(); }
 

@@ -117,7 +117,7 @@ class AbstractTool : public TexturedButton {
     virtual void endApplication(Canvas &canvas, uint32_t x, uint32_t y) = 0;
     virtual void apply(Canvas &canvas, uint32_t x, uint32_t y) = 0;
     void deactivate();
-    SettingsCollection *activate();
+    virtual SettingsCollection *activate();
 
    protected:
     SettingsCollection *mySettings;
@@ -240,19 +240,20 @@ class DrawingManager : public ContainerWindow {
 
 class LoadDialog : public ModalWindow {
    public:
-   LoadDialog();
-   const wchar_t *getPath();
+    LoadDialog();
+    const wchar_t *getPath();
+
    private:
-   InputBox *inp;
+    InputBox *inp;
 };
 
 class SaveDialog : public ModalWindow {
    public:
-   SaveDialog();
-   const wchar_t *getPath();
+    SaveDialog();
+    const wchar_t *getPath();
 
    private:
-   InputBox *inp;
+    InputBox *inp;
 };
 
 // There go important buttons

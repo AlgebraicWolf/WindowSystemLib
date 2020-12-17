@@ -1,0 +1,35 @@
+Created slider with the label Thickness
+Created slider with the label Thickness
+Setting position (2, 100)
+Currect settings collection is 0x555555a6a180
+Setting position (2, 100)
+Detected plugin directory editor_plugin_api/plugins/FancyBrush
+Executable path is editor_plugin_api/plugins/FancyBrush/FancyBrush.so and icon path is editor_plugin_api/plugins/FancyBrush/icon.png
+Trying to load plugin
+Created checkbox with the label Use as eraser
+Created slider with the label Rotation
+Created slider with the label Roundness
+Created slider with the label Thickness
+Setting position (2, 100)
+Detected plugin directory editor_plugin_api/plugins/GaussianBlur
+Executable path is editor_plugin_api/plugins/GaussianBlur/GaussianBlur.so and icon path is editor_plugin_api/plugins/GaussianBlur/icon.png
+Trying to load plugin
+Created checkbox with the label Duplicate borders
+Created slider with the label Radius 
+Created slider with the label Sigma
+Setting position (2, 100)
+Detected plugin directory editor_plugin_api/plugins/ColorFilter
+Executable path is editor_plugin_api/plugins/ColorFilter/ColorFilter.so and icon path is editor_plugin_api/plugins/ColorFilter/icon.png
+Trying to load plugin
+Setting position (2, 100)
+Detected plugin directory editor_plugin_api/plugins/BoxBlur
+Executable path is editor_plugin_api/plugins/BoxBlur/BoxBlur.so and icon path is editor_plugin_api/plugins/BoxBlur/icon.png
+Trying to load plugin
+Created slider with the label Thickness
+Setting position (2, 100)
+Currect settings collection is 0x555555a6a180
+Ending plugin tool application
+Currect settings collection is 0x555555a6a180
+Currect settings collection is 0x555555a6a180
+Currect settings collection is 0x555555a6a180
+Ending plugin tool application
