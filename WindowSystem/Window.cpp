@@ -770,4 +770,31 @@ void Viewport::draw() {
     RenderEngine::FlushOffScreen(position.x, position.y);
 }
 
+ModalWindowManager::ModalWindowManager() : currentModal(nullptr), invoked(false) {}
+
+void ModalWindowManager::processEvent(Event ev) {
+    if(invoked) {
+        currentModal->processEvent(ev);
+    } else { 
+        ContainerWindow::processEvent(ev);
+    }
+}
+
+void ModalWindowManager::draw() {
+    ContainerWindow::draw();
+    
+    if(invoked) {
+        currentModal->draw();
+    }
+}
+
+void ModalWindowManager::deinvoke() {
+    invoked = false;
+}
+
+void ModalWindow::finish() {
+    if(parent) {
+        static_cast<ModalWindowManager *>(parent)->deinvoke();
+    }
+}
 // P. S.: it's a mess, destroy this abomination

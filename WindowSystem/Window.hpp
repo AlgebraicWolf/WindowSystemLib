@@ -264,4 +264,25 @@ class Viewport : public ContainerWindow {
     Vector2<int> span;          // Span of the viewport to move along
 };
 
+// Class for modal window implementation
+class ModalWindow : public RectangleWindow {
+    public:
+    void finish();
+
+    private:
+};
+
+// Class for modal window management
+class ModalWindowManager : public ContainerWindow {
+    public:
+    ModalWindowManager();
+    void invokeModalWindow(ModalWindow *modal); 
+    virtual void processEvent(Event ev) override;
+    virtual void draw() override;
+    void deinvoke();
+
+    private: 
+    ModalWindow *currentModal;
+    bool invoked;
+};
 #endif  // WINDOW_HPP_
