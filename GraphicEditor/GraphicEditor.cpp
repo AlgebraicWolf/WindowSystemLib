@@ -67,6 +67,18 @@ DrawingManager::DrawingManager() {
     colorPicker = new ColorPicker();
     settingsContainer = new SettingsContainer;
 
+    ModalInvokerButton *load_button = new ModalInvokerButton;
+    ModalInvokerButton *save_button = new ModalInvokerButton;
+
+    load_button->setPosition(10, 10);
+    save_button->setPosition(70, 10);
+
+    load_button->attachTexture(RenderEngine::LoadTexture("img/open.png"));
+    save_button->attachTexture(RenderEngine::LoadTexture("img/save.png"));
+
+    attachChild(load_button);
+    attachChild(save_button);
+
     attachChild(toolManager);
     attachChild(colorPicker);
     attachChild(settingsContainer);
@@ -790,4 +802,22 @@ void SliderSetting::draw() {
     RenderEngine::popGlobalOffset();
 
     RenderEngine::DrawRect(x, y, width, height, bkg, frg, thickness);
+}
+
+ModalInvokerButton::ModalInvokerButton() : modal(nullptr) {
+    setThickness(-2);
+    setSize(50, 50);
+
+    setBackgroundColor({0, 0, 0, 0});
+    setOutlineColor({255, 255, 255, 255});
+    setHoverColor({255, 255, 255, 100});
+    setPressColor({255, 255, 255, 255});
+}
+
+void ModalInvokerButton::attachModal(ModalWindow *modal) {
+    this->modal = modal;
+}
+
+void ModalInvokerButton::click(const Event&) {
+    if(modal) invokeModalWindow(modal);
 }

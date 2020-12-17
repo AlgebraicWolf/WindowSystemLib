@@ -17,6 +17,8 @@ struct Vector2 {
     Vector2(const T &x, const T &y);  // Constructor with values
 };
 
+class ModalWindow;
+
 // Abstract window that can handle an event
 class AbstractWindow {
    public:
@@ -28,6 +30,7 @@ class AbstractWindow {
     void updatePropagationMask(uint64_t update);          // Function that updates mask of events that are propagated further yet are not used by the window itself
     virtual ~AbstractWindow();                            // Virtual destructor
     virtual void dump(FILE *f);
+    virtual void invokeModalWindow(ModalWindow * modal);
     void detach(); // Detach from parent
 
    protected:
@@ -276,7 +279,7 @@ class ModalWindow : public RectangleWindow {
 class ModalWindowManager : public ContainerWindow {
     public:
     ModalWindowManager();
-    void invokeModalWindow(ModalWindow *modal); 
+    virtual void invokeModalWindow(ModalWindow *modal) override; 
     virtual void processEvent(Event ev) override;
     virtual void draw() override;
     void deinvoke();

@@ -2,7 +2,6 @@
 #define APPLICATION_HPP_
 #include <cstdio>
 
-#include "Poem.h"
 #include "SFMLRenderEngine/RenderEngine.hpp"
 #include "WindowSystem/Window.hpp"
 
@@ -28,7 +27,7 @@ void Application::Attach(AbstractWindow *win) {
 
 void Application::Init(uint32_t width, uint32_t height) {
     RenderEngine::Init(width, height);
-    rootWindow = new ContainerWindow();
+    rootWindow = new ModalWindowManager();
 }
 
 void Application::Finalize() {

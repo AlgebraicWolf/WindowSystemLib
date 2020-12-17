@@ -235,6 +235,40 @@ class DrawingManager : public ContainerWindow {
     SettingsContainer *settingsContainer;
 };
 
+// There go important windows
+
+class LoadDialog : public ModalWindow {};
+
+class SaveDialog : public ModalWindow {};
+
+// There go important buttons
+
+// class LoadButton : public TexturedButton {
+//    public:
+//       LoadButton();
+//       virtual void click(const Event& ev);
+//    private:
+//       LoadDialog *dialog;
+// };
+
+// class SaveButton : public TexturedButton {
+//    public:
+//       SaveButton();
+//       virtual void click(const Event& ev);
+//    private:
+//       SaveDialog *dialog;
+// };
+
+class ModalInvokerButton : public TexturedButton {
+   public:
+    ModalInvokerButton();
+    void attachModal(ModalWindow *modal);
+    virtual void click(const Event &ev) override;
+
+   private:
+    ModalWindow *modal;
+};
+
 // There go tools
 
 // PluginTool is a tool wrapper for plugin
