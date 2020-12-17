@@ -128,6 +128,18 @@ class RectangleButton : public AbstractButton, public Rectangle {
     Color defaultBkg;
 };
 
+// TexturedButton is a rectangle button that is capable of drawing texture over itself
+
+class TexturedButton : public RectangleButton {
+    public:
+    TexturedButton();
+    void attachTexture(uint64_t descriptor);
+
+    virtual void draw() override;
+    private:
+    std::optional<uint64_t> textureDescriptor;
+};
+
 // Slider -- control that can be moved either horizontally of vertically
 class Slider : public RectangleButton {
    public:

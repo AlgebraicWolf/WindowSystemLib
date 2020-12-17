@@ -162,7 +162,10 @@ void DrawingManager::loadPlugins(const char *plugins_dir) {
             break;
         }
 
+        uint64_t texture = RenderEngine::LoadTexture(icon_path.c_str());
+
         PluginTool *tool = new PluginTool(handle, plugin_instance);
+        tool->attachTexture(texture);
 
         toolManager->attachTool(tool);
     }
@@ -497,7 +500,14 @@ void AbstractTool::deactivate() {
     setHoverColor({100, 100, 100, 255});
 }
 
+// TODO different icons for selected and not selected tools
+
+Eraser::Eraser() {
+    attachTexture(RenderEngine::LoadTexture("img/eraser.png"));
+}
+
 Brush::Brush() {
+    attachTexture(RenderEngine::LoadTexture("img/brush.png"));
     mySettings = new SettingsCollection;
     mySettings->addSetting(2, new SliderSetting(L"Thickness"));
 }
@@ -769,7 +779,7 @@ int SliderSetting::getHeight() { return height; }
 
 Setting SliderSetting::getSettingValue() {
     Setting res;
-    res.slider_pos = static_cast<double>(slider->getPositionAlongAxis() - 10) / 200;
+    res.slider_pos = static_cast<double>(slider->getPositionAlongAxis() - 10) / 220;
     printf("Slider value was fetched. It is %lf\n", res.slider_pos);
     return res;
 }

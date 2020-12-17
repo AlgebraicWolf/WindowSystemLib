@@ -6,6 +6,7 @@ sf::RenderWindow RenderEngine::mainWindow;
 sf::Font RenderEngine::defaultFont;
 std::stack<sf::Vector2i> RenderEngine::globalOffsets;
 std::stack<sf::RenderTarget *> RenderEngine::targets;
+std::vector<sf::Texture> RenderEngine::textures;
 
 void RenderEngine::Init(unsigned int width, unsigned int height) {
     mainWindow.create(sf::VideoMode(width, height), "My window system", sf::Style::None);
@@ -165,4 +166,21 @@ void RenderEngine::DrawBitmap(int x, int y, uint32_t width, uint32_t height, uin
     sf::Sprite bitmap_sprite(texture);
     bitmap_sprite.setPosition(x, y);
     mainWindow.draw(bitmap_sprite);
+}
+
+uint64_t RenderEngine::LoadTexture(const char *path) {
+    uint64_t descriptor = textures.size();
+    textures.emplace_back();
+    textures[descriptor].loadFromFile(path);
+
+    return descriptor;
+}
+
+void RenderEngine::DrawTexture(int x, int y, unsigned int width, unsigned int height, uint64_t descriptor) {
+    sf::Sprite currentSprite;
+    currentSprite.setTexture(textures[descriptor]);
+    auto size = textures[descriptor].getSize();
+    currentSprite.setScale(static_cast<float>(width) / size.x, static_cast<float>(height) / size.y);
+    currentSprite.setPosition(x - globalOffsets.top().x, y - globalOffsets.top().y);
+    targets.top()->draw(currentSprite);
 }

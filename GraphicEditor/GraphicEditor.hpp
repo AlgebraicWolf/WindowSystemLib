@@ -105,7 +105,7 @@ class SettingsContainer : public RectangleWindow {
 };
 
 // Tool interface
-class AbstractTool : public RectangleButton {
+class AbstractTool : public TexturedButton {
    public:
     AbstractTool();
     virtual void click(const Event &ev) override;
@@ -275,6 +275,7 @@ class Brush : public AbstractTool {
 // Eraser is a modification of brush that uses background color instead of foreground color
 class Eraser : public Brush {
    public:
+    Eraser();
     virtual void startApplication(Canvas &canvas, uint32_t x, uint32_t y, uint32_t frgColor,
                                   uint32_t bkgColor,
                                   std::unordered_map<SettingKey, Setting> settings) override;

@@ -16,6 +16,7 @@ class RenderEngine {
     static bool PollEvent(Event& ev);  // Event polling
     static void DrawRect(int x, int y, unsigned int width, unsigned int height, Color bkgColor,
                          Color frgColor, float thickness);                       // Draw rectangle
+    static void DrawTexture(int x, int y, unsigned int width, unsigned int height, uint64_t texture_descriptor); // Draw texture
     static void DrawText(int x, int y, const wchar_t* text, int characterSize);  // Draw text
     static void InitOffScreen(
         unsigned int width, unsigned int height);  // Initialize new target for off-screen rendering
@@ -24,6 +25,7 @@ class RenderEngine {
                            uint32_t* data);      // Draw array of pixels
     static void pushGlobalOffset(int x, int y);  // Push offset settings on the stack
     static void pushRelGlobalOffset(int x, int y);
+    static uint64_t LoadTexture(const char *texture); // Load texture and return its descriptor 
     static int getGlobalXOffset();
     static int getGlobalYOffset();
     static void popGlobalOffset();  // Pop offset settings
@@ -39,6 +41,7 @@ class RenderEngine {
     static std::stack<sf::Vector2i> globalOffsets;  // Global drawing offset
     static std::stack<sf::RenderTarget*>
         targets;  // Stack of off-screen targets for nested viewports and such
+    static std::vector<sf::Texture> textures;
     static sf::RenderWindow mainWindow;  // System window for displaying anything
     static sf::Font defaultFont;         // Default text font
     RenderEngine();  // Private constructor ensures that class is a singletone indeed

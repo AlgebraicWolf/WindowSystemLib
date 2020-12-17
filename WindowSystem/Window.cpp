@@ -321,6 +321,25 @@ bool RectangleButton::isInside(int x, int y) {
     return Rectangle::isInsideRect(x, y);
 }
 
+// TexturedButton methods
+TexturedButton::TexturedButton() : textureDescriptor(std::nullopt) {}
+
+void TexturedButton::attachTexture(uint64_t descriptor) {
+    textureDescriptor = descriptor;
+}
+
+void TexturedButton::draw() {
+    RectangleButton::draw();
+
+    if(textureDescriptor.has_value()) {
+        unsigned int shift = 0;
+        if(thickness < 0) {
+            shift = -thickness;
+        }
+        RenderEngine::DrawTexture(x + shift, y + shift, width - 2 * shift, height - 2 *shift, *textureDescriptor);
+    }
+}
+
 // Slider methods
 void Slider::setPosition(int x, int y) {
     this->x = x;
