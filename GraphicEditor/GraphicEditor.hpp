@@ -237,27 +237,17 @@ class DrawingManager : public ContainerWindow {
 
 // There go important windows
 
-class LoadDialog : public ModalWindow {};
+class LoadDialog : public ModalWindow {
+   public:
+   LoadDialog();
+};
 
-class SaveDialog : public ModalWindow {};
+class SaveDialog : public ModalWindow {
+   public:
+   SaveDialog();
+};
 
 // There go important buttons
-
-// class LoadButton : public TexturedButton {
-//    public:
-//       LoadButton();
-//       virtual void click(const Event& ev);
-//    private:
-//       LoadDialog *dialog;
-// };
-
-// class SaveButton : public TexturedButton {
-//    public:
-//       SaveButton();
-//       virtual void click(const Event& ev);
-//    private:
-//       SaveDialog *dialog;
-// };
 
 class ModalInvokerButton : public TexturedButton {
    public:

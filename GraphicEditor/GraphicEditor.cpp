@@ -76,6 +76,8 @@ DrawingManager::DrawingManager() {
     load_button->attachTexture(RenderEngine::LoadTexture("img/open.png"));
     save_button->attachTexture(RenderEngine::LoadTexture("img/save.png"));
 
+    save_button->attachModal(new SaveDialog);
+
     attachChild(load_button);
     attachChild(save_button);
 
@@ -820,4 +822,45 @@ void ModalInvokerButton::attachModal(ModalWindow *modal) {
 
 void ModalInvokerButton::click(const Event&) {
     if(modal) invokeModalWindow(modal);
+}
+
+// There go dialog windows
+
+class FinalSaveButton : public RectangleButton {
+    public:
+    FinalSaveButton();
+    virtual void click(const Event& ev) override;
+
+    private:
+};
+
+FinalSaveButton::FinalSaveButton() {
+    setPosition(200, 200);
+    setSize(200, 50);
+    setOutlineColor({255, 255, 255, 255});
+    setBackgroundColor({0, 0, 0, 0});
+    setHoverColor({255, 255, 255, 100});
+    setPressColor({255, 255, 255, 255});
+
+    setThickness(2);
+}
+
+void FinalSaveButton::click(const Event&) {
+    static_cast<SaveDialog *>(parent)->finish();
+} 
+
+SaveDialog::SaveDialog() {
+    setPosition(100, 100);
+    setSize(500, 500);
+    setOutlineColor({255, 255, 255, 255});
+    setBackgroundColor({0, 0, 0, 255});
+    setThickness(2);
+
+    FinalSaveButton *but = new FinalSaveButton;
+    InputBox *pathBox = new InputBox;
+    pathBox->setPosition(350, 120);
+    pathBox->setSize(200, 30);
+
+    attachChild(but);
+    attachChild(pathBox);
 }

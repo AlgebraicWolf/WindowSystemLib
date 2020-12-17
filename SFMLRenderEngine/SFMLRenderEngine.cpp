@@ -90,14 +90,20 @@ bool RenderEngine::TranslateEvent(sf::Event sfmlEv, Event &ev) {
             ev.mouse.button = Event::NONE;
             break;
 
-        case sf::Event::KeyPressed:
-            ev.eventType = EV_KEYBOARD_PRESS;
-            ev.keyboard.keyCode = sfmlEv.key.code;
-            break;
+        // case sf::Event::KeyPressed:
+        //     ev.eventType = EV_KEYBOARD_PRESS;
+        //     ev.keyboard.keyCode = sfmlEv.key.code;
+        //     break;
 
-        case sf::Event::KeyReleased:
-            ev.eventType = EV_KEYBOARD_RELEASE;
-            ev.keyboard.keyCode = sfmlEv.key.code;
+        // case sf::Event::KeyReleased:
+        //     ev.eventType = EV_KEYBOARD_RELEASE;
+        //     ev.keyboard.keyCode = sfmlEv.key.code;
+        //     break;
+
+        case sf::Event::TextEntered:
+            ev.eventType = EV_TEXT;
+            ev.keyboard.character = sfmlEv.text.unicode;
+            fprintf(stderr, "Generated EV_TEXT event for character %c\n", ev.keyboard.character);
             break;
 
         default:

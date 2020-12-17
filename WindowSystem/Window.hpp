@@ -23,21 +23,27 @@ class ModalWindow;
 class AbstractWindow {
    public:
     AbstractWindow();
-    virtual void draw();                                  // Draw the window
-    virtual void processEvent(Event ev);                  // Event processing. Just dummy function that calls handleEvent
-    virtual void attachToParent(AbstractWindow *parent);  // Function that attaches this window to some other window
-    void updateEventMask(uint64_t update);                // Function that updates event mask of the window as well as of its paternal node
-    void updatePropagationMask(uint64_t update);          // Function that updates mask of events that are propagated further yet are not used by the window itself
-    virtual ~AbstractWindow();                            // Virtual destructor
+    virtual void draw();  // Draw the window
+    virtual void processEvent(
+        Event ev);  // Event processing. Just dummy function that calls handleEvent
+    virtual void attachToParent(
+        AbstractWindow *parent);  // Function that attaches this window to some other window
+    void updateEventMask(uint64_t update);  // Function that updates event mask of the window as
+                                            // well as of its paternal node
+    void updatePropagationMask(
+        uint64_t update);  // Function that updates mask of events that are propagated further yet
+                           // are not used by the window itself
+    virtual ~AbstractWindow();  // Virtual destructor
     virtual void dump(FILE *f);
-    virtual void invokeModalWindow(ModalWindow * modal);
-    void detach(); // Detach from parent
+    virtual void invokeModalWindow(ModalWindow *modal);
+    void detach();  // Detach from parent
 
    protected:
     uint64_t eventMask;                  // Mask for filtering out unnecessary events
     uint64_t propagationMask;            // Mask for filtering events that should be propag
     AbstractWindow *parent;              // Parent window
-    virtual void handleEvent(Event ev);  // Handle certain (function that should be overloaded in order to implement event handling)
+    virtual void handleEvent(Event ev);  // Handle certain (function that should be overloaded in
+                                         // order to implement event handling)
 };
 
 // Abstract container window that can have child windows and pass on events.
@@ -84,21 +90,25 @@ class RectangleWindow : public ContainerWindow, public Rectangle {
     virtual void dump(FILE *f) override;
 };
 
-class AbstractButton : public AbstractWindow {
+class AbstractButton : public ContainerWindow {
    public:
-    AbstractButton();                                   // Button constructor that shall initialize fields of integral types and subscribe to events
-    virtual void click(const Event &ev) = 0;            // Click payload
-    virtual void onHoverEnter(const Event &ev) = 0;     // Hover enter payload
-    virtual void onHoverExit(const Event &ev) = 0;      // Hover exit payload
-    virtual void onButtonPress(const Event &ev) = 0;    // Button pressdown payload
-    virtual void onMouseMove(const Event &ev) = 0;      // Arbitrary mouse move
-    virtual void onButtonRelease(const Event &ev) = 0;  // Mouse button release
-    void setHoverColor(const Color &color);             // Set button hover color
-    void setPressColor(const Color &color);             // Set button press color
-    void setBackgroundColor(const Color &color);        // Set color for chillin' button
+    AbstractButton();  // Button constructor that shall initialize fields of integral types and
+                       // subscribe to events
+    virtual void click(const Event &ev) = 0;             // Click payload
+    virtual void onHoverEnter(const Event &ev) = 0;      // Hover enter payload
+    virtual void onHoverExit(const Event &ev) = 0;       // Hover exit payload
+    virtual void onButtonPress(const Event &ev) = 0;     // Button pressdown payload
+    virtual void onMouseMove(const Event &ev) = 0;       // Arbitrary mouse move
+    virtual void onButtonRelease(const Event &ev) = 0;   // Mouse button release
+    virtual void onButtonPressOutside(const Event &ev);  // Mouse pressed outside the button
+    void setHoverColor(const Color &color);              // Set button hover color
+    void setPressColor(const Color &color);              // Set button press color
+    void setBackgroundColor(const Color &color);         // Set color for chillin' button
 
-    // virtual void attachToParent(AbstractWindow *parent) override;  // Function that attaches this window to some other window
-    //  virtual bool isInside(int x, int y) ;                           // Function that checks intersection of a pixel with a button
+    // virtual void attachToParent(AbstractWindow *parent) override;  // Function that attaches this
+    // window to some other window
+    //  virtual bool isInside(int x, int y) ;                           // Function that checks
+    //  intersection of a pixel with a button
     virtual bool isInside(int x, int y) = 0;
     virtual void dump(FILE *f) override;
 
@@ -134,12 +144,13 @@ class RectangleButton : public AbstractButton, public Rectangle {
 // TexturedButton is a rectangle button that is capable of drawing texture over itself
 
 class TexturedButton : public RectangleButton {
-    public:
+   public:
     TexturedButton();
     void attachTexture(uint64_t descriptor);
 
     virtual void draw() override;
-    private:
+
+   private:
     std::optional<uint64_t> textureDescriptor;
 };
 
@@ -157,12 +168,13 @@ class Slider : public RectangleButton {
     virtual void dump(FILE *f) override;
 
    private:
-    virtual void handleEvent(Event ev) override;  // handleEvent should be overriden in order to allow for proper movement
-    int pivot;                                    // Coordinates of the beginning
-    int strokeStart;                              // Coordinate of the stroke start
-    int movementStart;                            // Coordinate of the scrollbar in the beginning of the stroke
-    int limit;                                    // Amount of movement to allow for
-    bool isHorizontal;                            // Is slider horizontal or vertical
+    virtual void handleEvent(Event ev)
+        override;       // handleEvent should be overriden in order to allow for proper movement
+    int pivot;          // Coordinates of the beginning
+    int strokeStart;    // Coordinate of the stroke start
+    int movementStart;  // Coordinate of the scrollbar in the beginning of the stroke
+    int limit;          // Amount of movement to allow for
+    bool isHorizontal;  // Is slider horizontal or vertical
 
     friend class Scrollbar;
 };
@@ -237,7 +249,8 @@ class ScrollbarManager : public ContainerWindow {
    public:
     ScrollbarManager(bool horizontalScrollable, bool verticalScrollable);
     void adjustScrollbarSize(int x, int y, int width, int height);
-    void adjustScrollableAreaSize(int width, int height);  // Adjusts scrollbar properties to the size of the scrollable area
+    void adjustScrollableAreaSize(
+        int width, int height);  // Adjusts scrollbar properties to the size of the scrollable area
     virtual void draw() override;
     Scrollbar *horizontal;
     Scrollbar *vertical;
@@ -249,7 +262,8 @@ class ScrollbarManager : public ContainerWindow {
     int adjHeight;
 };
 
-// Class for an offscreen drawing of its contents. Window supports scrolling. The contents of children must be treated as relative to the Viewport position
+// Class for an offscreen drawing of its contents. Window supports scrolling. The contents of
+// children must be treated as relative to the Viewport position
 class Viewport : public ContainerWindow {
    public:
     void setPosition(const Vector2<int> &pos);
@@ -269,22 +283,40 @@ class Viewport : public ContainerWindow {
 
 // Class for modal window implementation
 class ModalWindow : public RectangleWindow {
-    public:
+   public:
     void finish();
 
-    private:
+   private:
+};
+
+// Class for inputting characters via a keyboard
+class InputBox : public RectangleButton {
+   public:
+    InputBox();
+    const wchar_t *getString();
+    virtual void click(const Event &ev) override;
+    virtual void onButtonPressOutside(const Event &ev) override;
+
+    void setPosition(int x, int y);
+    void setSize(unsigned int x, unsigned int y);
+
+   private:
+    bool active;
+    virtual void handleEvent(Event ev) override;
+    std::wstring str;
+    TextWindow *content;
 };
 
 // Class for modal window management
 class ModalWindowManager : public ContainerWindow {
-    public:
+   public:
     ModalWindowManager();
-    virtual void invokeModalWindow(ModalWindow *modal) override; 
+    virtual void invokeModalWindow(ModalWindow *modal) override;
     virtual void processEvent(Event ev) override;
     virtual void draw() override;
     void deinvoke();
 
-    private: 
+   private:
     ModalWindow *currentModal;
     bool invoked;
 };

@@ -219,11 +219,15 @@ void AbstractButton::handleEvent(Event ev) {
     if (IS_MOUSE_EV(ev)) {
         bool inside = isInside(ev.mouse.x, ev.mouse.y);
 
-        if (ev.eventType == EV_MOUSE_KEY_PRESS && inside) {
+        if (ev.eventType == EV_MOUSE_KEY_PRESS) {
+            if(inside) {
             hovered = true;
             if (!pressed) {
                 pressed = true;
                 onButtonPress(ev);
+            }
+            } else {
+                onButtonPressOutside(ev);
             }
         } else if (ev.eventType == EV_MOUSE_KEY_RELEASE && pressed) {
             onButtonRelease(ev);
@@ -245,6 +249,8 @@ void AbstractButton::handleEvent(Event ev) {
         }
     }
 }
+
+void AbstractButton::onButtonPressOutside(const Event&) {}
 
 // Rectangle methods
 void Rectangle::setPosition(int x, int y) {
@@ -284,7 +290,10 @@ int Rectangle::getWidth() { return width; }
 int Rectangle::getHeight() { return height; }
 
 // RectangleButton methods
-void RectangleButton::draw() { RenderEngine::DrawRect(x, y, width, height, bkg, frg, thickness); }
+void RectangleButton::draw() {
+    RenderEngine::DrawRect(x, y, width, height, bkg, frg, thickness);
+    ContainerWindow::draw();
+}
 
 void RectangleWindow::draw() {
     RenderEngine::DrawRect(x, y, width, height, bkg, frg, thickness);
@@ -311,7 +320,7 @@ void RectangleButton::setBackgroundColor(const Color& color) {
 }
 
 void RectangleButton::onButtonRelease(const Event&) {
-    if(hovered) {
+    if (hovered) {
         bkg = hoverBkg;
     } else {
         bkg = defaultBkg;
@@ -772,6 +781,7 @@ void ModalWindowManager::draw() {
 
 void ModalWindowManager::invokeModalWindow(ModalWindow* modal) {
     currentModal = modal;
+    currentModal->attachToParent(this);
     invoked = true;
 }
 
@@ -780,6 +790,62 @@ void ModalWindowManager::deinvoke() { invoked = false; }
 void ModalWindow::finish() {
     if (parent) {
         static_cast<ModalWindowManager*>(parent)->deinvoke();
+    } else {
+        fprintf(stderr, "It seems that this modal window does not have a parent\n");
     }
 }
+
+InputBox::InputBox() : active(false) {
+    setThickness(2);
+    setBackgroundColor({0, 0, 0, 0});
+    setOutlineColor({255, 255, 255, 255});
+
+    content = new TextWindow;
+
+    updateEventMask(EV_TEXT);
+
+    attachChild(content);
+}
+
+void InputBox::click(const Event&) { active = true; }
+
+void InputBox::onButtonPressOutside(const Event&) {
+    active = false;
+}
+
+void InputBox::handleEvent(Event ev) {
+    // fprintf(stderr, "Inputbox %p received event of type %lu\n", static_cast<void *>(this),
+    // ev.eventType);
+    if (ev.eventType == EV_TEXT) {
+        if (active) {
+            if (ev.keyboard.character == '\n') {
+            } else if (ev.keyboard.character == '\b') {
+                if (str.length() > 0) str.pop_back();
+            } else {
+                str.push_back(ev.keyboard.character);
+            }
+            fprintf(stderr, "New length of string is %zu\n", str.length());
+        } else {
+            fprintf(stderr, "Inputbox is inactive, yet there is an event for character %c\n",
+                    ev.keyboard.character);
+        }
+
+        content->setText(str.c_str());
+    } else {
+        RectangleButton::handleEvent(ev);
+    }
+}
+
+void InputBox::setPosition(int x, int y) {
+    RectangleButton::setPosition(x, y);
+    content->setPosition(x + 2, y);
+}
+
+void InputBox::setSize(unsigned int x, unsigned int y) {
+    RectangleButton::setSize(x, y);
+    content->setCharSize(y - 4);
+}
+
+const wchar_t* InputBox::getString() { return str.c_str(); }
+
 // P. S.: it's a mess, destroy this abomination

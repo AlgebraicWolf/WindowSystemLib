@@ -31,6 +31,7 @@ void Application::Init(uint32_t width, uint32_t height) {
 }
 
 void Application::Finalize() {
+    Application::DumpHierarchy("dump.dot");
     delete rootWindow;
     RenderEngine::Finalize();
 }

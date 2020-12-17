@@ -29,7 +29,7 @@ struct Event {
     };
 
     struct Keyboard {
-        unsigned char keyCode;
+        unsigned char character;
     };
 
     struct Scroll {
