@@ -1,5 +1,7 @@
 #include <SFML/Graphics.hpp>
-
+#include <locale>
+#include <codecvt>
+#include <cstring>
 #include "RenderEngine.hpp"
 
 sf::RenderWindow RenderEngine::mainWindow;
@@ -189,4 +191,24 @@ void RenderEngine::DrawTexture(int x, int y, unsigned int width, unsigned int he
     currentSprite.setScale(static_cast<float>(width) / size.x, static_cast<float>(height) / size.y);
     currentSprite.setPosition(x - globalOffsets.top().x, y - globalOffsets.top().y);
     targets.top()->draw(currentSprite);
+}
+
+void RenderEngine::SaveToImage(const wchar_t *path, uint32_t *img, unsigned int width, unsigned int height) {
+    sf::Image image;
+    image.create(width, height, reinterpret_cast<uint8_t *>(img));
+    std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+    image.saveToFile(converter.to_bytes(std::wstring(path)));
+}
+
+std::tuple<unsigned int, unsigned int, uint32_t *> RenderEngine::LoadFromImage(const wchar_t *path) {
+    sf::Image image;
+    std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+
+    image.loadFromFile(converter.to_bytes(std::wstring(path)));
+    unsigned int width = image.getSize().x;
+    unsigned int height = image.getSize().y;
+
+    uint32_t *img = new uint32_t[width * height];
+    memcpy(img, image.getPixelsPtr(), width * height * sizeof(uint32_t));
+    return {width, height, img};
 }

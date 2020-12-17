@@ -29,7 +29,8 @@ class RenderEngine {
     static int getGlobalXOffset();
     static int getGlobalYOffset();
     static void popGlobalOffset();  // Pop offset settings
-
+    static void SaveToImage(const wchar_t *path, uint32_t *img, unsigned int width, unsigned int height);
+    static std::tuple<unsigned int, unsigned int, uint32_t *> LoadFromImage(const wchar_t *path);
     // static void RenderToMain(); // Set current target to mainWindow
     // static void SetRenderTarget(RenderTarget* target); // Set current render target
 

@@ -13,6 +13,7 @@ class Canvas : public RectangleWindow {
     uint32_t *getData();
     uint32_t getWidth();
     uint32_t getHeight();
+    void emplace(uint32_t width, uint32_t height, uint32_t *data);
     virtual void draw() override;
 
    private:
@@ -240,11 +241,18 @@ class DrawingManager : public ContainerWindow {
 class LoadDialog : public ModalWindow {
    public:
    LoadDialog();
+   const wchar_t *getPath();
+   private:
+   InputBox *inp;
 };
 
 class SaveDialog : public ModalWindow {
    public:
    SaveDialog();
+   const wchar_t *getPath();
+
+   private:
+   InputBox *inp;
 };
 
 // There go important buttons

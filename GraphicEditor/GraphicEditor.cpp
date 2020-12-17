@@ -10,6 +10,9 @@
 #include "../ColorConverter.hpp"
 #include "../SFMLRenderEngine/RenderEngine.hpp"
 
+Canvas *current_canvas = nullptr;
+DrawingManager *dm = nullptr;
+
 constexpr int32_t MAX_THICKNESS = 100;
 
 Color from_hex(uint32_t clr) {
@@ -62,6 +65,13 @@ void Canvas::handleEvent(Event ev) {
     }
 }
 
+void Canvas::emplace(uint32_t width, uint32_t height, uint32_t *data) {
+    delete[] this->data;
+    this->width = width;
+    this->height = height;
+    this->data = data;
+}
+
 DrawingManager::DrawingManager() {
     toolManager = new ToolManager;
     colorPicker = new ColorPicker();
@@ -76,6 +86,7 @@ DrawingManager::DrawingManager() {
     load_button->attachTexture(RenderEngine::LoadTexture("img/open.png"));
     save_button->attachTexture(RenderEngine::LoadTexture("img/save.png"));
 
+    load_button->attachModal(new LoadDialog);
     save_button->attachModal(new SaveDialog);
 
     attachChild(load_button);
@@ -106,6 +117,8 @@ DrawingManager::DrawingManager() {
     canvas = nullptr;
 
     loadPlugins("editor_plugin_api/plugins/");
+
+    dm = this;
 }
 
 void DrawingManager::createCanvas(uint32_t width, uint32_t height) {
@@ -115,6 +128,7 @@ void DrawingManager::createCanvas(uint32_t width, uint32_t height) {
     canvas->setPosition(125, 50);
 
     attachChild(canvas);
+    current_canvas = canvas;
 }
 
 void DrawingManager::startToolApplication(uint32_t x, uint32_t y) {
@@ -237,28 +251,29 @@ void PluginTool::startApplication(Canvas &canvas, uint32_t x, uint32_t y, uint32
     PluginAPI::Canvas api_canvas = {reinterpret_cast<uint8_t *>(canvas.getData()),
                                     canvas.getHeight(), canvas.getWidth()};
 
-    for(auto& property : plugin->properties) {
-        switch(property.second.display_type) {
+    for (auto &property : plugin->properties) {
+        switch (property.second.display_type) {
             case PluginAPI::Property::DISPLAY_TYPE::SLIDER:
                 property.second.double_value = settings[property.first].slider_pos;
-            break;
+                break;
 
             case PluginAPI::Property::DISPLAY_TYPE::CHECKBOX:
                 property.second.int_value = settings[property.first].checkbox;
-            break;
-            
+                break;
+
             default:
-            break;
+                break;
         }
     }
 
-    if(plugin->properties.contains(PluginAPI::TYPE::THICKNESS))
-        plugin->properties[PluginAPI::TYPE::THICKNESS].int_value = MAX_THICKNESS * plugin->properties[PluginAPI::TYPE::THICKNESS].double_value;
+    if (plugin->properties.contains(PluginAPI::TYPE::THICKNESS))
+        plugin->properties[PluginAPI::TYPE::THICKNESS].int_value =
+            MAX_THICKNESS * plugin->properties[PluginAPI::TYPE::THICKNESS].double_value;
 
-    if(plugin->properties.contains(PluginAPI::TYPE::PRIMARY_COLOR))
+    if (plugin->properties.contains(PluginAPI::TYPE::PRIMARY_COLOR))
         plugin->properties[PluginAPI::TYPE::PRIMARY_COLOR].int_value = frgColor;
 
-    if(plugin->properties.contains(PluginAPI::TYPE::SECONDARY_COLOR))
+    if (plugin->properties.contains(PluginAPI::TYPE::SECONDARY_COLOR))
         plugin->properties[PluginAPI::TYPE::PRIMARY_COLOR].int_value = bkgColor;
 
     plugin->start_apply(api_canvas, pos);
@@ -516,9 +531,7 @@ void AbstractTool::deactivate() {
 
 // TODO different icons for selected and not selected tools
 
-Eraser::Eraser() {
-    attachTexture(RenderEngine::LoadTexture("img/eraser.png"));
-}
+Eraser::Eraser() { attachTexture(RenderEngine::LoadTexture("img/eraser.png")); }
 
 Brush::Brush() {
     attachTexture(RenderEngine::LoadTexture("img/brush.png"));
@@ -816,51 +829,97 @@ ModalInvokerButton::ModalInvokerButton() : modal(nullptr) {
     setPressColor({255, 255, 255, 255});
 }
 
-void ModalInvokerButton::attachModal(ModalWindow *modal) {
-    this->modal = modal;
-}
+void ModalInvokerButton::attachModal(ModalWindow *modal) { this->modal = modal; }
 
-void ModalInvokerButton::click(const Event&) {
-    if(modal) invokeModalWindow(modal);
+void ModalInvokerButton::click(const Event &) {
+    if (modal) invokeModalWindow(modal);
 }
 
 // There go dialog windows
 
-class FinalSaveButton : public RectangleButton {
-    public:
+class FinalSaveButton : public TexturedButton {
+   public:
     FinalSaveButton();
-    virtual void click(const Event& ev) override;
+    virtual void click(const Event &ev) override;
 
-    private:
+   private:
+};
+
+class FinalLoadButton : public TexturedButton {
+   public:
+    FinalLoadButton();
+    virtual void click(const Event &ev) override;
 };
 
 FinalSaveButton::FinalSaveButton() {
-    setPosition(200, 200);
-    setSize(200, 50);
+    setPosition(540, 120);
+    setSize(30, 30);
     setOutlineColor({255, 255, 255, 255});
     setBackgroundColor({0, 0, 0, 0});
     setHoverColor({255, 255, 255, 100});
     setPressColor({255, 255, 255, 255});
 
     setThickness(2);
+    attachTexture(1);
 }
 
-void FinalSaveButton::click(const Event&) {
+void FinalSaveButton::click(const Event &) {
+    RenderEngine::SaveToImage(static_cast<SaveDialog *>(parent)->getPath(),
+                                             current_canvas->getData(), current_canvas->getWidth(),
+                                             current_canvas->getHeight());
     static_cast<SaveDialog *>(parent)->finish();
-} 
+}
+
+FinalLoadButton::FinalLoadButton() {
+    setPosition(540, 120);
+    setSize(30, 30);
+    setOutlineColor({255, 255, 255, 255});
+    setBackgroundColor({0, 0, 0, 0});
+    setHoverColor({255, 255, 255, 100});
+    setPressColor({255, 255, 255, 255});
+
+    setThickness(2);
+    attachTexture(0);
+}
+
+void FinalLoadButton::click(const Event &) { 
+    auto [width, height, img] = RenderEngine::LoadFromImage(static_cast<LoadDialog *>(parent)->getPath());
+    current_canvas->emplace(width, height, img);
+    static_cast<SaveDialog *>(parent)->finish(); 
+    }
+
+const wchar_t *SaveDialog::getPath() { return inp->getString(); }
+
+const wchar_t *LoadDialog::getPath() { return inp->getString(); }
 
 SaveDialog::SaveDialog() {
     setPosition(100, 100);
-    setSize(500, 500);
-    setOutlineColor({255, 255, 255, 255});
+    setSize(500, 70);
+    setOutlineColor({255, 140, 140, 255});
     setBackgroundColor({0, 0, 0, 255});
-    setThickness(2);
+    setThickness(6);
 
     FinalSaveButton *but = new FinalSaveButton;
-    InputBox *pathBox = new InputBox;
-    pathBox->setPosition(350, 120);
-    pathBox->setSize(200, 30);
+    inp = new InputBox;
+    inp->setPosition(120, 120);
+    inp->setSize(400, 30);
 
     attachChild(but);
-    attachChild(pathBox);
+    attachChild(inp);
+}
+
+LoadDialog::LoadDialog() {
+    setPosition(100, 100);
+    setSize(500, 70);
+    setOutlineColor({255, 140, 140, 255});
+    setBackgroundColor({0, 0, 0, 255});
+    setThickness(6);
+
+    FinalLoadButton *but = new FinalLoadButton;
+    inp = new InputBox;
+    inp->setPosition(120, 120);
+    inp->setSize(400, 30);
+
+    attachChild(but);
+    attachChild(inp);
 }
