@@ -275,7 +275,7 @@ void PluginTool::startApplication(Canvas &canvas, uint32_t x, uint32_t y, uint32
         plugin->properties[PluginAPI::TYPE::PRIMARY_COLOR].int_value = frgColor;
 
     if (plugin->properties.contains(PluginAPI::TYPE::SECONDARY_COLOR))
-        plugin->properties[PluginAPI::TYPE::PRIMARY_COLOR].int_value = bkgColor;
+        plugin->properties[PluginAPI::TYPE::SECONDARY_COLOR].int_value = bkgColor;
 
     plugin->start_apply(api_canvas, pos);
 }
